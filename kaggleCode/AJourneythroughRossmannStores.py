@@ -39,8 +39,10 @@ fig, (axis1) = plt.subplots(1, 1, figsize=(15, 4))
 sns.countplot(x='Open', hue='DayOfWeek', data=rossmann_df, palette="husl", ax=axis1)
 
 # fill NaN values in test_df with Open=1 if DayOfWeek != 7
-test_df["Open"][test_df["Open"] != test_df["Open"]] = (test_df["DayOfWeek"] != 7).astype(int)
-test.info()
+# test_df["Open"][test_df["Open"] != test_df["Open"]] = (test_df["DayOfWeek"] != 7).astype(int)
+# delete the data with nan value
+test_df = test_df.dropna(how='any', axis=0)
+
 # Drop Open column
 # rossmann_df.drop("Open", axis=1, inplace=True)
 # test_df.drop("Open", axis=1, inplace=True)
@@ -301,8 +303,7 @@ fig, (axis1) = plt.subplots(1, 1, figsize=(15, 5))
 sns.heatmap(store_piv[list(range(start_store, end_store + 1))].corr(), annot=True, linewidths=2)
 
 # using percent change for each store
-sns.heatmap(store_pct_chage[list(range(start_store, end_store+1))].corr(),annot=True,linewidths=2)
-
+sns.heatmap(store_pct_chage[list(range(start_store, end_store + 1))].corr(), annot=True, linewidths=2)
 
 # Notice that test_df has only year=2015, and months 8 & 9
 
@@ -345,7 +346,7 @@ rossmann_dic = dict(list(rossmann_df.groupby('Store')))
 test_dic = dict(list(test_df.groupby('Store')))
 submission = Series()
 scores = []
-
+plt.show()
 for i in test_dic:
     # current store
     store = rossmann_dic[i]
