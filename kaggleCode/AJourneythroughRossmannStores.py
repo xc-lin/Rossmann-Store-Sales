@@ -21,12 +21,13 @@ import xgboost as xgb
 
 sns.set_style('whitegrid')
 # get rossmann, store, & test csv files as a DataFrame
+# 读取.csv 文件
 rossmann_df = pd.read_csv("../input/train.csv")
 store_df = pd.read_csv("../input/store.csv")
 test_df = pd.read_csv("../input/test.csv")
 
 # preview the data
-rossmann_df.head()
+print(rossmann_df.head())
 
 rossmann_df.info()
 print("----------------------------")
