@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import xgboost as xgb
 
-import time
+from time import time
 import pickle
 
 # 导入数据集
