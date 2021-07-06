@@ -80,6 +80,8 @@ ax2 = pct_change_sales.plot(legend=True, ax=axis2, marker='o', rot=90, colormap=
 
 # .... contiune with Date
 
+
+
 # Plot average sales & customers for every year
 fig, (axis1, axis2) = plt.subplots(1, 2, figsize=(15, 4))
 
