@@ -174,20 +174,21 @@ x_train = ss.fit_transform(x_train)
 
 y_train = train["Sales"]
 x_valid = valid.drop("Sales", axis=1)
+
 x_valid = ss.fit_transform(x_valid)
+
 y_valid = valid["Sales"]
 
-# xgb_train = xgb.DMatrix(x_train, y_train)
-# xgb_valid = xgb.DMatrix(x_valid, y_valid)
-# gbm = xgb.train(params, dtrain, num_boost_round, evals=watchlist, \
-#                 early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=True)
+xgb_train = xgb.DMatrix(x_train, y_train)
+xgb_valid = xgb.DMatrix(x_valid, y_valid)
+gbm = xgb.train(params, dtrain, num_boost_round, evals=watchlist, \
+                early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=True)
 
 
-reg = linear_model.LinearRegression()
-
-print(x_train.info())
-reg.fit(x_train, y_train)
-y_hat = reg.predict(x_valid)
+# reg = linear_model.LinearRegression()
+#
+# reg.fit(x_train, y_train)
+# y_hat = reg.predict(x_valid)
 
 
 def basicRmspe(y, y_hat):
@@ -201,6 +202,8 @@ def rmspe(y, y_hat):
     return "rmspe", basicRmspe(y, y_hat)
 
 
-print(y_hat, y_valid)
-error = basicRmspe(y_valid, y_hat)
-print(error)
+for i in range(0, 10):
+    print(y_hat[i])
+    print(y_valid.iloc[i])
+# error = basicRmspe(y_valid, y_hat)
+# print(error)
