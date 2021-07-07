@@ -4,6 +4,7 @@ import numpy as np
 import pandas
 import seaborn as sns
 from matplotlib import pyplot as plt
+from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 import XgboostModel as xgb
 from sklearn import linear_model
@@ -178,11 +179,27 @@ x_valid = valid.drop("Sales", axis=1)
 # x_valid = ss.fit_transform(x_valid)
 y_valid = valid["Sales"]
 
-
 # XgboostModel.xgboostModel(x_train, y_train, x_valid, y_valid)
-LinearRegressionModel.linearRegression(x_train, y_train, x_valid, y_valid)
+# LinearRegressionModel.linearRegression(x_train, y_train, x_valid, y_valid)
 # alpha=0
 # while alpha<50:
 #     LinearRegressionModel.ridgeRegression(x_train, y_train, x_valid, y_valid,alpha=alpha)
 #     alpha+=0.1
+train_data=train_data[extractedFeatures]
+rossmann_dic = dict(list(train_data.groupby('Store')))
+test_dic = dict(list(test_data.groupby('Store')))
+
+for i in rossmann_dic:
+    store = rossmann_dic[i]
+
+    # define training and testing sets
+    X_train = store.drop(["Sales", "Store"], axis=1)
+    Y_train = store["Sales"]
+
+
+    # Linear Regression
+    lreg = LinearRegression()
+    lreg.fit(X_train, Y_train)
+
+    print(lreg.score(X_train, Y_train))
 
