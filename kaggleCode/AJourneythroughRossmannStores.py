@@ -62,6 +62,9 @@ test_df['Month'] = test_df['Date'].apply(lambda x: int(str(x)[5:7]))
 rossmann_df['Date'] = rossmann_df['Date'].apply(lambda x: (str(x)[:7]))
 test_df['Date'] = test_df['Date'].apply(lambda x: (str(x)[:7]))
 
+
+
+'''
 # group by date and get average sales, and percent change
 average_sales = rossmann_df.groupby('Date')["Sales"].mean()
 pct_change_sales = rossmann_df.groupby('Date')["Sales"].sum().pct_change()
@@ -126,11 +129,11 @@ sns.barplot(x='Promo', y='Sales', data=rossmann_df, ax=axis1)
 sns.barplot(x='Promo', y='Customers', data=rossmann_df, ax=axis2)
 
 # StateHoliday
-
+'''
 # StateHoliday column has values 0 & "0", So, we need to merge values with 0 to "0"
 rossmann_df["StateHoliday"].loc[rossmann_df["StateHoliday"] == 0] = "0"
 # test_df["StateHoliday"].loc[test_df["StateHoliday"] == 0] = "0"
-
+'''
 # Plot
 sns.countplot(x='StateHoliday', data=rossmann_df)
 
@@ -143,11 +146,11 @@ mask = (rossmann_df["StateHoliday"] != "0") & (rossmann_df["Sales"] > 0)
 sns.barplot(x='StateHoliday', y='Sales', data=rossmann_df[mask], ax=axis2)
 
 # .... continue with StateHoliday
-
+'''
 # After
 rossmann_df["StateHoliday"] = rossmann_df["StateHoliday"].map({0: 0, "0": 0, "a": 1, "b": 1, "c": 1})
 test_df["StateHoliday"] = test_df["StateHoliday"].map({0: 0, "0": 0, "a": 1, "b": 1, "c": 1})
-
+'''
 fig, (axis1, axis2) = plt.subplots(1, 2, figsize=(15, 4))
 
 sns.barplot(x='StateHoliday', y='Sales', data=rossmann_df, ax=axis1)
@@ -307,7 +310,7 @@ sns.heatmap(store_piv[list(range(start_store, end_store + 1))].corr(), annot=Tru
 
 # using percent change for each store
 sns.heatmap(store_pct_chage[list(range(start_store, end_store + 1))].corr(), annot=True, linewidths=2)
-
+'''
 # Notice that test_df has only year=2015, and months 8 & 9
 
 # drop Year and Month
@@ -349,7 +352,7 @@ rossmann_dic = dict(list(rossmann_df.groupby('Store')))
 test_dic = dict(list(test_df.groupby('Store')))
 submission = Series()
 scores = []
-plt.show()
+# plt.show()
 for i in test_dic:
     # current store
     store = rossmann_dic[i]

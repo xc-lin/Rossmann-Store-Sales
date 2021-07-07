@@ -1,9 +1,13 @@
+import math
+
+import numpy as np
 import pandas
 import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 import xgboost as xgb
 from sklearn import linear_model
+from sklearn.preprocessing import StandardScaler
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -20,7 +24,8 @@ print(store_data.info())
 print(store_data.head())
 print(store_data.isnull().sum())
 print()
-store_data.fillna("", inplace=True)
+store_data[store_data["PromoInterval"].isnull()] = ""
+store_data.fillna(0, inplace=True)
 print("------test_data-------")
 print(test_data.info())
 print(test_data.head())
@@ -42,12 +47,15 @@ monthNumToWord = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', \
 train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split('-')[1]))
 train_data["Month"] = train_data["Month"].map(monthNumToWord)
 train_data["Day"] = train_data["Date"].apply(lambda x: int(x.split('-')[2]))
-train_data = train_data.drop("Date", axis=1)
+train_data["IsInPromo"] = train_data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
+train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split('-')[1]))
 # print(train_data.head())
-# letterToNum = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-# train_data["StoreType"] = train_data["StoreType"].map(letterToNum)
+letterToNum = {'0': 0, 'a': 1, 'b': 2, 'c': 3, 'd': 4}
+train_data["StoreType"] = train_data["StoreType"].map(letterToNum)
+train_data["Assortment"] = train_data["Assortment"].map(letterToNum)
+train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: '0' if x == 0 else x)
+train_data["StateHoliday"] = train_data["StateHoliday"].map(letterToNum).astype(int)
 
-train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: 0 if x == '0' else x)
 print(train_data.info())
 # train_data = train_data.drop("Promo2SinceWeek", axis=1)
 # train_data = train_data.drop("Promo2", axis=1)
@@ -123,7 +131,7 @@ sns.scatterplot(train_data, x="Customers", y="Sales", hue=train_data["SchoolHoli
 sns.scatterplot(train_data, x="Customers", y="Sales", hue=train_data["StateHoliday"], ax=sub2)
 plt.show()
 
-
+'''
 a, (sub1, sub2) = plt.subplots(2, 2, figsize=(20, 20))
 SchoolHoliday_sale_cus = train_data.groupby("SchoolHoliday", as_index=False)[["Sales", "Customers"]].mean()
 sns.barplot(data=SchoolHoliday_sale_cus, x="SchoolHoliday", y="Sales", ax=sub1[0])
@@ -133,13 +141,13 @@ StateHoliday_sale_cus = train_data.groupby("StateHoliday", as_index=False)[["Sal
 sns.barplot(data=StateHoliday_sale_cus, x="StateHoliday", y="Sales", ax=sub2[0])
 sns.barplot(data=StateHoliday_sale_cus, x="StateHoliday", y="Customers", ax=sub2[1])
 plt.show()
-
+'''
 customers_sales = train_data.groupby("Customers", as_index=False)["Sales"].mean()
 sns.scatterplot(data=customers_sales, x="Customers", y="Sales")
 plt.show()
 
 
-train_data["IsInPromo"] = train_data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
+
 
 promo_sales = train_data[train_data["Store"] == 30].groupby("IsInPromo", as_index=False)["Sales"].mean()
 
@@ -147,25 +155,37 @@ sns.barplot(data=promo_sales, x="IsInPromo", y="Sales")
 plt.show()
 sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
 plt.show()
-
-
 '''
-extractFeature = ["Store", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
-                  "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day", "Sales"]
+
+extractFeature = ["Store", "Sales", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
+                  "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day"]
+# extractFeature = ["Sales"]
+# print(train_data.info())
+
+
 train = train_data[extractFeature]
+
+ss = StandardScaler()
+
 train, valid = train_test_split(train, test_size=0.012, random_state=10)
-x_train = train.drop("Sales")
+
+x_train = train.drop(["Sales"], axis=1)
+x_train = ss.fit_transform(x_train)
+
 y_train = train["Sales"]
-x_valid = valid.drop("Sales")
+x_valid = valid.drop("Sales", axis=1)
+x_valid = ss.fit_transform(x_valid)
 y_valid = valid["Sales"]
 
-y_train = train_data["Sales"]
-
-xgb_train = xgb.DMatrix(x_train, y_train)
-xgb_valid = xgb.DMatrix(x_valid, y_valid)
+# xgb_train = xgb.DMatrix(x_train, y_train)
+# xgb_valid = xgb.DMatrix(x_valid, y_valid)
 # gbm = xgb.train(params, dtrain, num_boost_round, evals=watchlist, \
 #                 early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=True)
+
+
 reg = linear_model.LinearRegression()
+
+print(x_train.info())
 reg.fit(x_train, y_train)
 y_hat = reg.predict(x_valid)
 
@@ -181,5 +201,6 @@ def rmspe(y, y_hat):
     return "rmspe", basicRmspe(y, y_hat)
 
 
-error = rmspe(y_valid, y_hat)
+print(y_hat, y_valid)
+error = basicRmspe(y_valid, y_hat)
 print(error)
