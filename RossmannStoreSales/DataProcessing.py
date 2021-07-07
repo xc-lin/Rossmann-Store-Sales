@@ -5,9 +5,12 @@ import pandas
 import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
-import xgboost as xgb
+import XgboostModel as xgb
 from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
+
+from RossmannStoreSales import XgboostModel
+from RossmannStoreSales import LinearRegressionModel
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -131,8 +134,9 @@ sns.scatterplot(train_data, x="Customers", y="Sales", hue=train_data["SchoolHoli
 sns.scatterplot(train_data, x="Customers", y="Sales", hue=train_data["StateHoliday"], ax=sub2)
 plt.show()
 
-'''
+
 a, (sub1, sub2) = plt.subplots(2, 2, figsize=(20, 20))
+
 SchoolHoliday_sale_cus = train_data.groupby("SchoolHoliday", as_index=False)[["Sales", "Customers"]].mean()
 sns.barplot(data=SchoolHoliday_sale_cus, x="SchoolHoliday", y="Sales", ax=sub1[0])
 sns.barplot(data=SchoolHoliday_sale_cus, x="SchoolHoliday", y="Customers", ax=sub1[1])
@@ -141,13 +145,10 @@ StateHoliday_sale_cus = train_data.groupby("StateHoliday", as_index=False)[["Sal
 sns.barplot(data=StateHoliday_sale_cus, x="StateHoliday", y="Sales", ax=sub2[0])
 sns.barplot(data=StateHoliday_sale_cus, x="StateHoliday", y="Customers", ax=sub2[1])
 plt.show()
-'''
+
 customers_sales = train_data.groupby("Customers", as_index=False)["Sales"].mean()
 sns.scatterplot(data=customers_sales, x="Customers", y="Sales")
 plt.show()
-
-
-
 
 promo_sales = train_data[train_data["Store"] == 30].groupby("IsInPromo", as_index=False)["Sales"].mean()
 
@@ -157,53 +158,31 @@ sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
 plt.show()
 '''
 
-extractFeature = ["Store", "Sales", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
-                  "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day"]
-# extractFeature = ["Sales"]
-# print(train_data.info())
+extractedFeatures = ["Store", "Sales", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
+                     "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day"]
 
+train_data["Store"] = train_data["Store"].astype(int)
+train_data["CompetitionDistance"] = train_data["CompetitionDistance"].astype(int)
+train_data["Promo2"] = train_data["Promo2"].astype(int)
 
-train = train_data[extractFeature]
+# train = train_data[extractedFeatures]
 
 ss = StandardScaler()
 
-train, valid = train_test_split(train, test_size=0.012, random_state=10)
+train, valid = train_test_split(train_data[extractedFeatures], test_size=0.012, random_state=10)
 
 x_train = train.drop(["Sales"], axis=1)
-x_train = ss.fit_transform(x_train)
-
+# x_train = ss.fit_transform(x_train)
 y_train = train["Sales"]
 x_valid = valid.drop("Sales", axis=1)
-
-x_valid = ss.fit_transform(x_valid)
-
+# x_valid = ss.fit_transform(x_valid)
 y_valid = valid["Sales"]
 
-xgb_train = xgb.DMatrix(x_train, y_train)
-xgb_valid = xgb.DMatrix(x_valid, y_valid)
-gbm = xgb.train(params, dtrain, num_boost_round, evals=watchlist, \
-                early_stopping_rounds=100, feval=rmspe_xg, verbose_eval=True)
 
+# XgboostModel.xgboostModel(x_train, y_train, x_valid, y_valid)
+LinearRegressionModel.linearRegression(x_train, y_train, x_valid, y_valid)
+# alpha=0
+# while alpha<50:
+#     LinearRegressionModel.ridgeRegression(x_train, y_train, x_valid, y_valid,alpha=alpha)
+#     alpha+=0.1
 
-# reg = linear_model.LinearRegression()
-#
-# reg.fit(x_train, y_train)
-# y_hat = reg.predict(x_valid)
-
-
-def basicRmspe(y, y_hat):
-    result = math.sqrt(np.mean(((y - y_hat) / y) ** 2))
-    return result
-
-
-def rmspe(y, y_hat):
-    y = np.log1p(y.get_label())
-    y_hat = np.log1p(y_hat)
-    return "rmspe", basicRmspe(y, y_hat)
-
-
-for i in range(0, 10):
-    print(y_hat[i])
-    print(y_valid.iloc[i])
-# error = basicRmspe(y_valid, y_hat)
-# print(error)

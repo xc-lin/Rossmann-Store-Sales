@@ -369,6 +369,7 @@ for i in test_dic:
     lreg = LinearRegression()
     lreg.fit(X_train, Y_train)
     Y_pred = lreg.predict(X_test)
+    print(lreg.score(X_train, Y_train))
     scores.append(lreg.score(X_train, Y_train))
 
     # Xgboost
