@@ -1,17 +1,17 @@
 import math
+from time import time
 
 import numpy as np
 import pandas
+import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-import XgboostModel as xgb
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 
-from RossmannStoreSales import XgboostModel
-from RossmannStoreSales import LinearRegressionModel
+from RossmannStoreSales import LinearRegressionModel, Tree, XgboostModel
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -40,7 +40,7 @@ null_data = test_data.isnull().T.any()
 # set
 test_data["Open"][null_data] = (test_data["DayOfWeek"][null_data] != 7).astype(int)
 
-train_data = train_data[train_data["Sales"] > 0]
+#
 
 train_data = pandas.merge(train_data, store_data, on="Store")
 
@@ -68,7 +68,14 @@ print(train_data.info())
 plt.subplots(figsize=(30, 25))
 sns.heatmap(train_data.corr(), cmap='YlGnBu', annot=True, vmin=-0.1, vmax=0.1, center=0)
 sns.pairplot(train_data[0:100])
+'''
 
+store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
+sns.boxplot(store_sales["Sales"])
+sns.displot(store_sales, x="Sales")
+plt.show()
+
+'''
 salesPerYear = train_data.groupby("Year", as_index=False)[["Sales"]].mean()
 
 plt.subplot(3, 1, 1)
@@ -92,6 +99,14 @@ plt.xlabel("Day")
 plt.ylabel("Sales")
 plt.show()
 
+salesPerMonthYear = train_data.groupby(["Month", "Year"], as_index=False)[["Sales"]].mean()
+plt.title("Average sale of every month in different year")
+sns.pointplot(data=salesPerMonthYear, x="Month", y="Sales", hue="Year")
+plt.xlabel("Month")
+plt.ylabel("Sales")
+plt.show()
+
+
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(16, 8))
 Sales_StoreType = train_data.groupby("StoreType", as_index=False)[["Sales"]].mean()
 plt.title("Average sale of every StoreType")
@@ -109,6 +124,9 @@ plt.ylabel("Sales")
 plt.show()
 
 
+sns.boxplot(data=train_data, x="Promo", y="Sales")
+plt.show()
+
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
 sns.scatterplot(train_data["Customers"], train_data["Sales"], hue=train_data["Promo"], ax=sub1)
 sns.scatterplot(train_data["Customers"], train_data["Sales"], hue=train_data["Promo2"], ax=sub2)
@@ -124,10 +142,9 @@ promo2_train = train_data.groupby("Promo2", as_index=False)["Sales"].mean()
 sns.barplot(data=promo2_train, x="Promo2", y="Sales", ax=sub2)
 plt.show()
 
+sales_of_weekday = train_data.groupby("DayOfWeek", as_index=False)["Sales"].mean().reset_index()
 
-sales_of_weekday = train_data.groupby("DayOfWeek", as_index=False)["Sales"].mean()
-
-sns.lineplot(data=sales_of_weekday, x="DayOfWeek", y="Sales", markers="o")
+sns.pointplot(data=sales_of_weekday, x="DayOfWeek", y="Sales", markers="o")
 plt.show()
 
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
@@ -170,36 +187,85 @@ train_data["Promo2"] = train_data["Promo2"].astype(int)
 
 ss = StandardScaler()
 
+# train_data = train_data[train_data["Sales"] > 0]
+
 train, valid = train_test_split(train_data[extractedFeatures], test_size=0.012, random_state=10)
 
 x_train = train.drop(["Sales"], axis=1)
+
 # x_train = ss.fit_transform(x_train)
+
 y_train = train["Sales"]
+
 x_valid = valid.drop("Sales", axis=1)
 # x_valid = ss.fit_transform(x_valid)
 y_valid = valid["Sales"]
 
+
+def convert_to_twovalues(data, columns):
+    connect_column = []
+    for i in columns:
+        df_tem = pd.get_dummies(data[i], prefix=i)
+        connect_column.append(df_tem)
+    data_new = pd.concat(connect_column, axis=1)
+    return data_new
+
+
+columns_value_processing = ['DayOfWeek', 'StateHoliday', 'StoreType', 'Assortment', 'CompetitionOpenSinceMonth',
+                            'CompetitionOpenSinceYear', 'Promo2SinceWeek', 'Promo2SinceYear', 'PromoInterval', 'Year',
+                            'Month', 'Day']
+data_value_processing = convert_to_twovalues(train_data, columns_value_processing)
+
+
+# 数值类型进行归一化(0-1范围)
+def feature_standarize(data, columns):
+    combine_col = []
+    for j in columns:
+        min_ = data[j].min()
+        max_ = data[j].max()
+        standard_col = data[j].apply(lambda x: (x - min_) / (max_ - min_))  # 标准化为0-1范围
+        # standard_col=data[j].apply(lambda x:(x-data[j].min())/(data[j].max()-data[j].min()))这样运行很慢，因为每次都要找min，max
+        combine_col.append(standard_col)
+    data_new2 = pd.concat(combine_col, axis=1)
+    return data_new2
+
+
+data_CompetitionDistance = feature_standarize(train_data, ['CompetitionDistance'])
+data_CompetitionDistance.head()
+
+data_train_test_new = pd.concat(
+    [data_value_processing, data_CompetitionDistance, train_data[['Open', 'Promo', 'SchoolHoliday', 'Promo2']]], axis=1)
+data_train_test_new.info()
+
+index_split = train_data.shape[0] - 1
+data_train_test_final = pd.concat([data_train_test_new.loc[:index_split], train_data['Sales']], axis=1)
+data_for_predict = data_train_test_new.loc[train_data.shape[0]:]
+
+data_x = data_train_test_final.iloc[:, :-1]
+data_y = data_train_test_final.iloc[:, -1:]
+train_x, test_x, train_y, test_y = train_test_split(data_x, data_y, test_size=0.2)
+lr_model=LinearRegression()
+t5 = time()
+score = cross_val_score(lr_model, train_x, train_y, cv=StratifiedKFold(5))
+print(score)
+t6 = time()
+print('运行时间：', (t6 - t5))
 # XgboostModel.xgboostModel(x_train, y_train, x_valid, y_valid)
+
 # LinearRegressionModel.linearRegression(x_train, y_train, x_valid, y_valid)
+
 # alpha=0
 # while alpha<50:
 #     LinearRegressionModel.ridgeRegression(x_train, y_train, x_valid, y_valid,alpha=alpha)
 #     alpha+=0.1
-train_data=train_data[extractedFeatures]
-rossmann_dic = dict(list(train_data.groupby('Store')))
-test_dic = dict(list(test_data.groupby('Store')))
 
-for i in rossmann_dic:
-    store = rossmann_dic[i]
+# LinearRegressionModel.linearRegressionPerStore(train, valid)
 
-    # define training and testing sets
-    X_train = store.drop(["Sales", "Store"], axis=1)
-    Y_train = store["Sales"]
+# alpha = 0
+# while alpha < 50:
+#     LinearRegressionModel.ridgeRegressionPerStore(train, valid, alpha=alpha)
+#     alpha += 0.1
 
-
-    # Linear Regression
-    lreg = LinearRegression()
-    lreg.fit(X_train, Y_train)
-
-    print(lreg.score(X_train, Y_train))
-
+# print(123)
+# Tree.decisionTree(x_train, y_train, x_valid, y_valid)
+# print(123)

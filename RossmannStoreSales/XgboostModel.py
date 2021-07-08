@@ -1,5 +1,6 @@
 import numpy as np
 import xgboost as xgb
+from matplotlib import pyplot as plt
 
 from RossmannStoreSales import LossFuction
 
@@ -23,7 +24,8 @@ def xgboostModel(x_train, y_train, x_valid, y_valid):
     watchlist = [(xgb_train, 'train'), (xgb_valid, 'eval')]
     gbm = xgb.train(params, xgb_train, num_boost_round, evals=watchlist, \
                     early_stopping_rounds=100, feval=LossFuction.rmspe, verbose_eval=True)
-
+    xgb.plot_importance(gbm)
+    plt.show()
     y_hat = gbm.predict(xgb_valid)
     error = LossFuction.basicRmspe(y_valid, np.expm1(y_hat))
     print('RMSPE: {:.6f}'.format(error))
