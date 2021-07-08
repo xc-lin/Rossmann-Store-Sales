@@ -5,9 +5,7 @@ from matplotlib import pyplot as plt
 from RossmannStoreSales import LossFuction
 
 
-def xgboostModel(x_train, y_train, x_valid, y_valid):
-
-
+def xgboostModel(x_train, y_train):
     params = {"objective": "reg:linear",
               "booster": "gbtree",
               "eta": 0.3,
@@ -20,15 +18,17 @@ def xgboostModel(x_train, y_train, x_valid, y_valid):
     num_boost_round = 300
 
     xgb_train = xgb.DMatrix(x_train, np.log1p(y_train))
-    xgb_valid = xgb.DMatrix(x_valid, np.log1p(y_valid))
-    watchlist = [(xgb_train, 'train'), (xgb_valid, 'eval')]
-    gbm = xgb.train(params, xgb_train, num_boost_round, evals=watchlist, \
-                    early_stopping_rounds=100, feval=LossFuction.rmspe, verbose_eval=True)
-    xgb.plot_importance(gbm)
-    plt.show()
-    y_hat = gbm.predict(xgb_valid)
-    error = LossFuction.basicRmspe(y_valid, np.expm1(y_hat))
-    print('RMSPE: {:.6f}'.format(error))
-
-    print(np.expm1(y_hat))
-    print(y_valid.values)
+    watchlist = [(xgb_train, 'train')]
+    # gbm = xgb.train(params, xgb_train, num_boost_round, evals=watchlist, \
+    #                 early_stopping_rounds=100, feval=LossFuction.rmspe, verbose_eval=True)
+    # xgb.plot_importance(gbm)
+    # plt.show()
+    # y_hat = gbm.predict(xgb_valid)
+    # error = LossFuction.basicRmspe(y_valid, np.expm1(y_hat))
+    # print('RMSPE: {:.6f}'.format(error))
+    #
+    # print(np.expm1(y_hat))
+    # print(y_valid.values)
+    res = xgb.cv(params, xgb_train, num_boost_round, \
+                 early_stopping_rounds=100, feval=LossFuction.rmspe, verbose_eval=True, nfold=10)
+    print(res)

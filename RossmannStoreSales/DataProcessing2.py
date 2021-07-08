@@ -9,10 +9,9 @@ from matplotlib import pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn import linear_model
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from RossmannStoreSales import LinearRegressionModel, Tree, XgboostModel
-from RossmannStoreSales.GradientBoostingRegressor import GradientBoosting
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -36,7 +35,7 @@ print(test_data.info())
 print(test_data.head())
 print(test_data[test_data.isnull().T.any()])
 # the data in train data of store 622 is open except 7
-# print(train_data.loc[train_data["Store"] == 622][["DayOfWeek", "Open"]])
+# print(train_data.loc[train_data['Store'] == 622][["DayOfWeek", "Open"]])
 null_data = test_data.isnull().T.any()
 # set
 test_data["Open"][null_data] = (test_data["DayOfWeek"][null_data] != 7).astype(int)
@@ -46,27 +45,28 @@ test_data["Open"][null_data] = (test_data["DayOfWeek"][null_data] != 7).astype(i
 train_data = pandas.merge(train_data, store_data, on="Store")
 
 # so that we can compute the corr easily
-train_data["Year"] = train_data["Date"].apply(lambda x: int(x.split("-")[0]))
-monthNumToWord = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", \
-                  7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"}
-train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split("-")[1]))
+train_data["Year"] = train_data["Date"].apply(lambda x: int(x.split('-')[0]))
+monthNumToWord = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', \
+                  7: 'Jul', 8: 'Aug', 9: 'Sept', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
+train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split('-')[1]))
 train_data["Month"] = train_data["Month"].map(monthNumToWord)
-train_data["Day"] = train_data["Date"].apply(lambda x: int(x.split("-")[2]))
+train_data["Day"] = train_data["Date"].apply(lambda x: int(x.split('-')[2]))
 train_data["IsInPromo"] = train_data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
-train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split("-")[1]))
+train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split('-')[1]))
 # print(train_data.head())
-letterToNum = {"0": 0, "a": 1, "b": 2, "c": 3, "d": 4}
+letterToNum = {'0': 0, 'a': 1, 'b': 2, 'c': 3, 'd': 4}
 train_data["StoreType"] = train_data["StoreType"].map(letterToNum)
 train_data["Assortment"] = train_data["Assortment"].map(letterToNum)
-train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
+train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: '0' if x == 0 else x)
 train_data["StateHoliday"] = train_data["StateHoliday"].map(letterToNum).astype(int)
+
 print(train_data.info())
 # train_data = train_data.drop("Promo2SinceWeek", axis=1)
 # train_data = train_data.drop("Promo2", axis=1)
 # train_data = train_data.drop("Promo2SinceYear", axis=1)
 '''
 plt.subplots(figsize=(30, 25))
-sns.heatmap(train_data.corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.1, center=0)
+sns.heatmap(train_data.corr(), cmap='YlGnBu', annot=True, vmin=-0.1, vmax=0.1, center=0)
 sns.pairplot(train_data[0:100])
 '''
 
@@ -176,38 +176,94 @@ sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
 plt.show()
 '''
 
-extractedFeatures = [ "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
-                     "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek",
-                     "Promo2SinceYear"]
+extractedFeatures = ["Store", "Sales", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
+                     "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open"]
 
-# train_data["Store"] = train_data["Store"].astype(int)
+train_data["Store"] = train_data["Store"].astype(int)
 train_data["CompetitionDistance"] = train_data["CompetitionDistance"].astype(int)
 train_data["Promo2"] = train_data["Promo2"].astype(int)
-train_data["Promo2SinceWeek"] = train_data["Promo2SinceWeek"].astype(int)
-train_data["Promo2SinceYear"] = train_data["Promo2SinceYear"].astype(int)
 
-x_train = train_data[extractedFeatures]
-y_train = train_data["Sales"]
-# ss = StandardScaler()
-#
-# # train_data = train_data[train_data["Sales"] > 0]
-#
-# train, valid = train_test_split(train_data[extractedFeatures], test_size=0.012, random_state=10)
-#
-# x_train = train.drop(["Sales"], axis=1)
-#
-# # x_train = ss.fit_transform(x_train)
-#
-# y_train = train["Sales"]
-#
-# x_valid = valid.drop("Sales", axis=1)
-# # x_valid = ss.fit_transform(x_valid)
-# y_valid = valid["Sales"]
-print(x_train.info())
+# train = train_data[extractedFeatures]
 
-XgboostModel.xgboostModel(x_train, y_train)
+ss = StandardScaler()
 
-# LinearRegressionModel.linearRegression(x_train, y_train)
+# train_data = train_data[train_data["Sales"] > 0]
+
+train, valid = train_test_split(train_data[extractedFeatures], test_size=0.012, random_state=10)
+
+x_train = train.drop(["Sales"], axis=1)
+
+# x_train = ss.fit_transform(x_train)
+
+y_train = train["Sales"]
+
+x_valid = valid.drop("Sales", axis=1)
+# x_valid = ss.fit_transform(x_valid)
+y_valid = valid["Sales"]
+
+def convert_to_twovalues(data, columns):
+    connect_column = []
+    for i in columns:
+        df_tem = pd.get_dummies(data[i], prefix=i)
+        connect_column.append(df_tem)
+    data_new = pd.concat(connect_column, axis=1)
+    return data_new
+
+
+# columns_value_processing = ['DayOfWeek', 'StateHoliday', 'StoreType', 'Assortment', 'CompetitionOpenSinceMonth',
+#                             'CompetitionOpenSinceYear', 'Promo2SinceWeek', 'Promo2SinceYear', 'PromoInterval', 'Year',
+#                             'Month', 'Day']
+columns_value_processing = ['DayOfWeek', 'StateHoliday', 'StoreType', 'Assortment',
+                            'IsInPromo', 'Year','Promo2SinceWeek','Promo2SinceYear',
+                            'Month', 'Day']
+data_value_processing = convert_to_twovalues(train_data, columns_value_processing)
+print(data_value_processing.head())
+# columns_value_processing = ['DayOfWeek', 'StateHoliday', 'StoreType', 'Assortment',
+#                             'IsInPromo', 'Year',
+#                             'Month', 'Day']
+# data_value_processing = train_data[columns_value_processing]
+
+
+# 数值类型进行归一化(0-1范围)
+def feature_standarize(data, columns):
+    combine_col = []
+    for j in columns:
+        min_ = data[j].min()
+        max_ = data[j].max()
+        standard_col = data[j].apply(lambda x: (x - min_) / (max_ - min_))  # 标准化为0-1范围
+        # standard_col=data[j].apply(lambda x:(x-data[j].min())/(data[j].max()-data[j].min()))这样运行很慢，因为每次都要找min，max
+        combine_col.append(standard_col)
+    data_new2 = pd.concat(combine_col, axis=1)
+    return data_new2
+
+
+mm = MinMaxScaler()
+data_CompetitionDistance = train_data[['CompetitionDistance']]
+# data_CompetitionDistance = mm.fit_transform(train_data[['CompetitionDistance']])
+# data_CompetitionDistance = pd.DataFrame(data_CompetitionDistance,columns=['CompetitionDistance'])
+
+# data_CompetitionDistance["CompetitionDistance"] =
+
+data_train_test_new = pd.concat(
+    [data_value_processing, data_CompetitionDistance, train_data[['Open', 'Promo', 'SchoolHoliday', 'Promo2']]], axis=1)
+data_train_test_new.info()
+
+index_split = train_data.shape[0] - 1
+data_train_test_final = pd.concat([data_train_test_new.loc[:index_split], train_data['Sales']], axis=1)
+data_for_predict = data_train_test_new.loc[train_data.shape[0]:]
+
+data_x = data_train_test_final.iloc[:, :-1]
+data_y = data_train_test_final.iloc[:, -1:]
+train_x, test_x, train_y, test_y = train_test_split(data_x, data_y, test_size=0.2)
+lr_model = LinearRegression()
+t5 = time()
+score = cross_val_score(lr_model, data_train_test_new, train_data['Sales'], cv=StratifiedKFold(10))
+print("10-folder cross validation score: ", score)
+t6 = time()
+print('运行时间：', (t6 - t5))
+# XgboostModel.xgboostModel(x_train, y_train, x_valid, y_valid)
+
+# LinearRegressionModel.linearRegression(x_train, y_train, x_valid, y_valid)
 
 # alpha=0
 # while alpha<50:
@@ -221,10 +277,6 @@ XgboostModel.xgboostModel(x_train, y_train)
 #     LinearRegressionModel.ridgeRegressionPerStore(train, valid, alpha=alpha)
 #     alpha += 0.1
 
-
-# Tree.decisionTree(x_train, y_train)
-
-
-# Tree.randomForest(x_train, y_train)
-
-# GradientBoosting(x_train, y_train)
+# print(123)
+# Tree.decisionTree(x_train, y_train, x_valid, y_valid)
+# print(123)

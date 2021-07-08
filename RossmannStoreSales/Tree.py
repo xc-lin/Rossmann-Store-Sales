@@ -1,17 +1,31 @@
+import time
+
 import numpy as np
+import pandas
 import sklearn
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
 from RossmannStoreSales import LossFuction
 
 
-def decisionTree(x_train, y_train, x_valid, y_valid):
-    DT = DecisionTreeClassifier()
-    DT.fit(x_train, y_train)
-    y_hat=DT.predict(x_valid)
-    error = LossFuction.basicRmspe(y_valid, y_hat)
-    print(error)
+def preprocess(x_train, y_train):
+    mm = MinMaxScaler()
+    # data_CompetitionDistance = train_data[["CompetitionDistance"]]
+    scalered_dis = mm.fit_transform(x_train[["CompetitionDistance"]])
+    x_train["CompetitionDistance"] = pandas.DataFrame(scalered_dis, columns=["CompetitionDistance"])
+    return x_train, y_train
+
+
+def decisionTree(x_train, y_train):
+    # x_train, y_train = preprocess(x_train, y_train)
+    reg = DecisionTreeRegressor()
+    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
+    # reg.fit(x_train, y_train)
+    print("10-folder cross validation score: ", score)
+    print("mean score: ", np.mean(score))
 
 
 def decisionTreePerStore(train, valid):
@@ -40,12 +54,15 @@ def decisionTreePerStore(train, valid):
     print(np.mean(errors))
 
 
-def randomForest(x_train, y_train, x_valid, y_valid):
-    DT = DecisionTreeClassifier()
-    DT.fit(x_train, y_train)
-    y_hat=DT.predict(x_valid)
-    error = LossFuction.basicRmspe(y_valid, y_hat)
-    print(error)
+def randomForest(x_train, y_train):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = RandomForestRegressor()
+    t5 = time.time()
+    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
+    t6 = time.time()
+    print("10-folder cross validation score: ", score)
+    print("mean score: ", np.mean(score))
+    print("time: ", t6 - t5)
 
 
 def randomForestPerStore(train, valid):
