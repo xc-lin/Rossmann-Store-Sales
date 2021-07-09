@@ -11,8 +11,8 @@ from sklearn.model_selection import train_test_split, cross_val_score, Stratifie
 from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 
-from RossmannStoreSales import LinearRegressionModel, Tree, XgboostModel
-from RossmannStoreSales.GradientBoostingRegressor import GradientBoosting
+from RossmannStoreSales import LinearRegressionModel, Tree, Ensemble, Optimization
+from RossmannStoreSales.Ensemble import generateGradientBoosting
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -61,6 +61,7 @@ train_data["Assortment"] = train_data["Assortment"].map(letterToNum)
 train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
 train_data["StateHoliday"] = train_data["StateHoliday"].map(letterToNum).astype(int)
 print(train_data.info())
+
 # train_data = train_data.drop("Promo2SinceWeek", axis=1)
 # train_data = train_data.drop("Promo2", axis=1)
 # train_data = train_data.drop("Promo2SinceYear", axis=1)
@@ -68,14 +69,14 @@ print(train_data.info())
 plt.subplots(figsize=(30, 25))
 sns.heatmap(train_data.corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.1, center=0)
 sns.pairplot(train_data[0:100])
-'''
+
 
 store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
 sns.boxplot(store_sales["Sales"])
 sns.displot(store_sales, x="Sales")
 plt.show()
 
-'''
+
 salesPerYear = train_data.groupby("Year", as_index=False)[["Sales"]].mean()
 
 plt.subplot(3, 1, 1)
@@ -142,7 +143,7 @@ promo2_train = train_data.groupby("Promo2", as_index=False)["Sales"].mean()
 sns.barplot(data=promo2_train, x="Promo2", y="Sales", ax=sub2)
 plt.show()
 
-sales_of_weekday = train_data.groupby("DayOfWeek", as_index=False)["Sales"].mean().reset_index()
+sales_of_weekday = train_data.groupby("DayOfWeek", as_index=False)["Sales"].mean()
 
 sns.pointplot(data=sales_of_weekday, x="DayOfWeek", y="Sales", markers="o")
 plt.show()
@@ -176,11 +177,11 @@ sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
 plt.show()
 '''
 
-extractedFeatures = [ "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
+extractedFeatures = ["DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
                      "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek",
                      "Promo2SinceYear"]
 
-# train_data["Store"] = train_data["Store"].astype(int)
+train_data["Store"] = train_data["Store"].astype(int)
 train_data["CompetitionDistance"] = train_data["CompetitionDistance"].astype(int)
 train_data["Promo2"] = train_data["Promo2"].astype(int)
 train_data["Promo2SinceWeek"] = train_data["Promo2SinceWeek"].astype(int)
@@ -188,6 +189,9 @@ train_data["Promo2SinceYear"] = train_data["Promo2SinceYear"].astype(int)
 
 x_train = train_data[extractedFeatures]
 y_train = train_data["Sales"]
+# print("-------------------")
+# print(train_data.loc[(train_data["Sales"] == 5822) & (train_data["Store"] == 759)])
+# print("=====================")
 # ss = StandardScaler()
 #
 # # train_data = train_data[train_data["Sales"] > 0]
@@ -203,28 +207,75 @@ y_train = train_data["Sales"]
 # x_valid = valid.drop("Sales", axis=1)
 # # x_valid = ss.fit_transform(x_valid)
 # y_valid = valid["Sales"]
-print(x_train.info())
 
-XgboostModel.xgboostModel(x_train, y_train)
 
 # LinearRegressionModel.linearRegression(x_train, y_train)
 
-# alpha=0
-# while alpha<50:
-#     LinearRegressionModel.ridgeRegression(x_train, y_train, x_valid, y_valid,alpha=alpha)
-#     alpha+=0.1
+# LinearRegressionModel.sgdRegression(x_train, y_train)
+
+alphas = []
+alpha = 0
+mean_scores = []
+while alpha < 50:
+    alphas.append(alpha)
+    mean_score = LinearRegressionModel.ridgeRegression(x_train, y_train, alpha=alpha)
+    print("alpha: ", alpha,"mean score: ",mean_score)
+    alpha += 0.5
+    mean_scores.append(mean_score)
+maxV = max(mean_scores)
+index = mean_scores.index(maxV)
+print("Ridge alpha: %.1f mean score: %f" % (alphas[index], maxV))
+plt.plot(alphas, mean_scores)
+plt.xlabel("alpha")
+plt.ylabel("mean score")
+plt.show()
+
+alphas = []
+alpha = 0
+mean_scores = []
+while alpha < 20:
+    alphas.append(alpha)
+    mean_score = LinearRegressionModel.lassoRegression(x_train, y_train, alpha=alpha)
+    print("alpha: ", alpha, "mean score: ", mean_score)
+    alpha += 0.2
+
+    mean_scores.append(mean_score)
+
+maxV = max(mean_scores)
+index = mean_scores.index(maxV)
+print("Lasso alpha: %.1f mean score: %f" % (alphas[index], maxV))
+plt.plot(alphas, mean_scores)
+plt.xlabel("alpha")
+plt.ylabel("mean score")
+plt.show()
 
 # LinearRegressionModel.linearRegressionPerStore(train, valid)
 
-# alpha = 0
-# while alpha < 50:
-#     LinearRegressionModel.ridgeRegressionPerStore(train, valid, alpha=alpha)
-#     alpha += 0.1
-
-
 # Tree.decisionTree(x_train, y_train)
 
+# Ensemble.randomForest(x_train, y_train)
 
-# Tree.randomForest(x_train, y_train)
+# Ensemble.extraTrees(x_train, y_train)
 
 # GradientBoosting(x_train, y_train)
+
+
+features = extractedFeatures
+features.append("Sales")
+train = train_data[features]
+train, valid = train_test_split(train, test_size=0.012, random_state=10)
+
+y_train_v = train["Sales"]
+x_train_v = train.drop("Sales", axis=1)
+
+y_valid = valid["Sales"]
+x_valid = valid.drop("Sales", axis=1)
+
+# LinearRegressionModel.generateLinearRegression(x_train_v, y_train_v, x_valid, y_valid)
+# LinearRegressionModel.generateLogisticRegression(x_train_v, y_train_v, x_valid, y_valid)
+# LinearRegressionModel.generateSGDRegression(x_train_v, y_train_v, x_valid, y_valid)
+# LinearRegressionModel.generateRidgeRegression(x_train_v, y_train_v, 38.8, x_valid, y_valid)
+# Tree.generateDecisionTree(x_train_v, y_train_v, x_valid, y_valid)
+# Ensemble.generateRandomForest(x_train_v, y_train_v, x_valid, y_valid)
+# Ensemble.generateExtraTrees(x_train_v, y_train_v, x_valid, y_valid)
+# generateGradientBoosting(x_train_v, y_train_v, x_valid, y_valid)

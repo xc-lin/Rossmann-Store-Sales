@@ -1,27 +1,13 @@
+import joblib
 import numpy as np
 import pandas
 
 from sklearn import linear_model
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
 from RossmannStoreSales import LossFuction
-
-
-def preprocess(x_train, y_train):
-    one_hot_code_features = ["DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
-                             "Promo2", "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek",
-                             "Promo2SinceYear"]
-    one_hot_part = pandas.get_dummies(x_train, columns=one_hot_code_features)
-
-    mm = MinMaxScaler()
-    # data_CompetitionDistance = train_data[["CompetitionDistance"]]
-    scalered_dis = mm.fit_transform(x_train[["CompetitionDistance"]])
-    scalered_dis = pandas.DataFrame(scalered_dis, columns=["CompetitionDistance"])
-
-    # XgboostModel.xgboostModel(x_train, y_train, x_valid, y_valid)
-    x_train = pandas.concat([one_hot_part, scalered_dis], axis=1)
-    return x_train, y_train
+from RossmannStoreSales.Compare import compareResult
+from RossmannStoreSales.Preprocess import preprocess
 
 
 def linearRegression(x_train, y_train):
@@ -37,14 +23,57 @@ def linearRegression(x_train, y_train):
     # print(error)
 
 
-def ridgeRegression(x_train, y_train, x_valid, y_valid, alpha):
-    reg = linear_model.Ridge(alpha=alpha)
-
+def generateLinearRegression(x_train, y_train, x_valid, y_valid):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = linear_model.LinearRegression()
     reg.fit(x_train, y_train)
-    y_hat = reg.predict(x_valid)
+    compareResult(reg, x_valid, y_valid, "LinearRegression")
+    joblib.dump(reg, '../model/LinearRegression.pkl')
 
-    error = LossFuction.basicRmspe(y_valid, y_hat)
-    print(error)
+
+def sgdRegression(x_train, y_train):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = linear_model.SGDRegressor()
+    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
+    print("10-folder cross validation score: ", score)
+    print("mean score: ", np.mean(score))
+
+
+def generateSGDRegression(x_train, y_train, x_valid, y_valid):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = linear_model.SGDRegressor()
+    reg.fit(x_train, y_train)
+    compareResult(reg, x_valid, y_valid, "SGDRegressor")
+    joblib.dump(reg, '../model/SGDRegressor.pkl')
+
+
+def ridgeRegression(x_train, y_train, alpha):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = linear_model.Ridge(alpha=alpha)
+    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
+    # reg.fit(x_train, y_train)
+    print("10-folder cross validation score: ", score)
+    mean_score = np.mean(score)
+    print("mean score: ", mean_score)
+    return mean_score
+
+def lassoRegression(x_train, y_train, alpha):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = linear_model.Lasso(alpha=alpha)
+    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
+    # reg.fit(x_train, y_train)
+    print("10-folder cross validation score: ", score)
+    mean_score = np.mean(score)
+    print("mean score: ", mean_score)
+    return mean_score
+
+
+def generateRidgeRegression(x_train, y_train, alpha, x_valid, y_valid):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = linear_model.Ridge(alpha=alpha)
+    reg.fit(x_train, y_train)
+    compareResult(reg, x_valid, y_valid, "RidgeRegression")
+    joblib.dump(reg, '../model/RidgeRegression.pkl')
 
 
 def linearRegressionPerStore(train, valid):
