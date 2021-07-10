@@ -29,8 +29,10 @@ def optimization(x_train, y_train, model):
     plt.show()
 
 
-def optimizationRF(x_valid, y_valid):
+def optimizationRFTotal(valid):
     reg = joblib.load("../model/RandomForestRegressor.pkl")
+    y_valid = valid["Sales"]
+    x_valid = valid.drop("Sales", axis=1)
     x_valid, y_valid = preprocessMM(x_valid, y_valid)
     w = 0.95
     ws = []
@@ -51,17 +53,76 @@ def optimizationRF(x_valid, y_valid):
     plt.xlabel("W")
     plt.ylabel("Error")
     plt.show()
+    plt.plot(y_hat[::100])
+    plt.plot(y_hat[::100] * w)
+    plt.plot(y_valid.iloc[::100].values)
+    plt.legend(["original y_hat(RandomForestRegressor)", "apply overall correction factor", "real"])
+    plt.show()
 
 
-def optimizationRFParam(x_train, y_train,x_valid,y_valid):
-    reg = RandomForestRegressor()
-    reg.fit(x_train, y_train)
-    print(reg.score(x_valid,y_valid))
-    # param = {"n_estimators": range(100, 101)}
-    # t1 = time.time()
+def optimizationRFPerMonth(valid):
+    valid = valid.sort_values("Month")
+    reg = joblib.load("../model/RandomForestRegressor.pkl")
+    y_valid = valid["Sales"]
+    x_valid = valid.drop("Sales", axis=1)
+    x_valid, y_valid = preprocessMM(x_valid, y_valid)
+    print(reg.score(x_valid, y_valid))
+    y_hat = reg.predict(x_valid)
+    y_hat = np.array(y_hat)
+    overall_correction_factor = 0.961500
+    w_month = {}
+    prev = 0
+    for month in range(1, 13):
+        curr = x_valid[x_valid["Month"] == month].shape[0] + prev
+        w = 0.90
+        ws = []
+        errors = []
+        while w < 1.1:
+            y_hat_temp = y_hat[prev:curr]
+            # print(x_valid.head())
+            y_hat_temp = y_hat_temp * overall_correction_factor * w
+            ws.append(w)
+            error = LossFuction.basicRmspe(y_valid.values[prev:curr], y_hat_temp)
+            errors.append(error)
+            w += 0.0001
+            # print("w = %f, error = %f" % (w, error))
+        min_error = min(errors)
+        w = ws[np.argmin(errors)]
+        print("*" * 30)
+        print("min:w = %f, error = %f" % (w, min_error))
+        w_month[month] = w
+        prev = curr
+    y_hat_overall = y_hat* overall_correction_factor
+    error = LossFuction.basicRmspe(y_valid.values, y_hat_overall)
+    print("apply overall correction factor, error: ", error)
+    prev = 0
+
+    for month in range(1, 13):
+        curr = x_valid[x_valid["Month"] == month].shape[0] + prev
+        y_hat[prev:curr] = y_hat[prev:curr] * w_month[month] * overall_correction_factor
+        prev = curr
+    error = LossFuction.basicRmspe(y_valid.values, y_hat)
+    print("after applying factors for every months, error: ", error)
+    plt.plot(y_hat_overall[::100])
+    plt.plot(y_hat[::100])
+    plt.plot(y_valid.iloc[::100].values)
+    plt.legend(["apply overall correction factor", "after applying factors for every months", "real"])
+    plt.show()
+
+
+def optimizationRFParam(x_train, y_train, x_valid, y_valid):
     # reg = RandomForestRegressor()
-    # gs = GridSearchCV(estimator=reg, param_grid=param)
-    # gs.fit(x_train, y_train)
-    # t2 = time.time()
-    # print("best score: %f, best param: " % gs.best_score_, gs.best_params_)
-    # print("time is ", t2 - t1)
+    # reg.fit(x_train, y_train)
+    # print(reg.score(x_valid,y_valid))
+    # x_train = x_train[x_train["Year"] == 2015].iloc[:10000]
+    # x_valid = x_valid[x_valid["Year"] == 2015].iloc[:10000]
+    param = {"n_estimators": range(150, 200, 10),
+             "min_samples_leaf": range(10, 100, 20)
+             }
+    t1 = time.time()
+    reg = RandomForestRegressor()
+    gs = GridSearchCV(estimator=reg, param_grid=param)
+    gs.fit(x_train, y_train)
+    t2 = time.time()
+    print("best score: %f, best param: " % gs.best_score_, gs.best_params_)
+    print("time is ", t2 - t1)

@@ -1,6 +1,11 @@
 import numpy as np
-from numpy import argmin
+import pandas
 
-values = [1, 2, 3, 4, 5]
-a = [4, 2, 3, 4, 5]
-print(np.mean(values))
+x = {"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]}
+y = {"c": [1, 2, 3, 4]}
+xd = pandas.DataFrame(x)
+yd = pandas.DataFrame(y)
+print(yd[xd["a"] == 2])
+k = [0.1, 0.2, 0.3, 0.4]
+k2=np.array(k)
+print(k*0.5)
