@@ -1,5 +1,6 @@
-import pandas as pd
+import numpy as np
+from numpy import argmin
 
-data_CompetitionDistance = pd.DataFrame()
-data_CompetitionDistance["CompetitionDistance"] = [1,2,3]
-print(data_CompetitionDistance)
+values = [1, 2, 3, 4, 5]
+a = [4, 2, 3, 4, 5]
+print(np.mean(values))

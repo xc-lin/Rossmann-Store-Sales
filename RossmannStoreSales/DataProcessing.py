@@ -1,18 +1,8 @@
-import math
-from time import time
-
-import numpy as np
 import pandas
-import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
-from sklearn import linear_model
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
+from sklearn.model_selection import train_test_split
 
-from RossmannStoreSales import LinearRegressionModel, Tree, Ensemble, Optimization
-from RossmannStoreSales.Ensemble import generateGradientBoosting
+from RossmannStoreSales import LinearRegressionModel
+from RossmannStoreSales.Optimization import optimizationRFParam
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -189,6 +179,17 @@ train_data["Promo2SinceYear"] = train_data["Promo2SinceYear"].astype(int)
 
 x_train = train_data[extractedFeatures]
 y_train = train_data["Sales"]
+
+features = extractedFeatures
+features.append("Sales")
+train = train_data[features]
+train, valid = train_test_split(train, test_size=0.012, random_state=10)
+
+y_train_v = train["Sales"]
+x_train_v = train.drop("Sales", axis=1)
+# valid = valid[valid["Sales"] > 0]
+y_valid = valid["Sales"]
+x_valid = valid.drop("Sales", axis=1)
 # print("-------------------")
 # print(train_data.loc[(train_data["Sales"] == 5822) & (train_data["Store"] == 759)])
 # print("=====================")
@@ -212,42 +213,42 @@ y_train = train_data["Sales"]
 # LinearRegressionModel.linearRegression(x_train, y_train)
 
 # LinearRegressionModel.sgdRegression(x_train, y_train)
-
-alphas = []
-alpha = 0
-mean_scores = []
-while alpha < 50:
-    alphas.append(alpha)
-    mean_score = LinearRegressionModel.ridgeRegression(x_train, y_train, alpha=alpha)
-    print("alpha: ", alpha,"mean score: ",mean_score)
-    alpha += 0.5
-    mean_scores.append(mean_score)
-maxV = max(mean_scores)
-index = mean_scores.index(maxV)
-print("Ridge alpha: %.1f mean score: %f" % (alphas[index], maxV))
-plt.plot(alphas, mean_scores)
-plt.xlabel("alpha")
-plt.ylabel("mean score")
-plt.show()
-
-alphas = []
-alpha = 0
-mean_scores = []
-while alpha < 20:
-    alphas.append(alpha)
-    mean_score = LinearRegressionModel.lassoRegression(x_train, y_train, alpha=alpha)
-    print("alpha: ", alpha, "mean score: ", mean_score)
-    alpha += 0.2
-
-    mean_scores.append(mean_score)
-
-maxV = max(mean_scores)
-index = mean_scores.index(maxV)
-print("Lasso alpha: %.1f mean score: %f" % (alphas[index], maxV))
-plt.plot(alphas, mean_scores)
-plt.xlabel("alpha")
-plt.ylabel("mean score")
-plt.show()
+#
+# alphas = []
+# alpha = 0
+# mean_scores = []
+# while alpha < 50:
+#     alphas.append(alpha)
+#     mean_score = LinearRegressionModel.ridgeRegression(x_train, y_train, alpha=alpha)
+#     print("alpha: ", alpha)
+#     alpha += 0.5
+#     mean_scores.append(mean_score)
+# maxV = max(mean_scores)
+# index = mean_scores.index(maxV)
+# print("Ridge alpha: %.1f mean score: %f" % (alphas[index], maxV))
+# plt.plot(alphas, mean_scores)
+# plt.xlabel("alpha")
+# plt.ylabel("mean score")
+# plt.show()
+#
+# alphas = []
+# alpha = 0
+# mean_scores = []
+# while alpha < 20:
+#     alphas.append(alpha)
+#     mean_score = LinearRegressionModel.lassoRegression(x_train, y_train, alpha=alpha)
+#     print("alpha: ", alpha)
+#     alpha += 0.2
+#
+#     mean_scores.append(mean_score)
+#
+# maxV = max(mean_scores)
+# index = mean_scores.index(maxV)
+# print("Lasso alpha: %.1f mean score: %f" % (alphas[index], maxV))
+# plt.plot(alphas, mean_scores)
+# plt.xlabel("alpha")
+# plt.ylabel("mean score")
+# plt.show()
 
 # LinearRegressionModel.linearRegressionPerStore(train, valid)
 
@@ -257,25 +258,23 @@ plt.show()
 
 # Ensemble.extraTrees(x_train, y_train)
 
-# GradientBoosting(x_train, y_train)
+# Ensemble.gradientBoosting(x_train, y_train)
 
+#
 
-features = extractedFeatures
-features.append("Sales")
-train = train_data[features]
-train, valid = train_test_split(train, test_size=0.012, random_state=10)
-
-y_train_v = train["Sales"]
-x_train_v = train.drop("Sales", axis=1)
-
-y_valid = valid["Sales"]
-x_valid = valid.drop("Sales", axis=1)
-
+#
 # LinearRegressionModel.generateLinearRegression(x_train_v, y_train_v, x_valid, y_valid)
-# LinearRegressionModel.generateLogisticRegression(x_train_v, y_train_v, x_valid, y_valid)
 # LinearRegressionModel.generateSGDRegression(x_train_v, y_train_v, x_valid, y_valid)
-# LinearRegressionModel.generateRidgeRegression(x_train_v, y_train_v, 38.8, x_valid, y_valid)
+# LinearRegressionModel.generateRidgeRegression(x_train_v, y_train_v, 37, x_valid, y_valid)
+# LinearRegressionModel.generateLassoRegression(x_train_v, y_train_v, 0.2, x_valid, y_valid)
 # Tree.generateDecisionTree(x_train_v, y_train_v, x_valid, y_valid)
 # Ensemble.generateRandomForest(x_train_v, y_train_v, x_valid, y_valid)
 # Ensemble.generateExtraTrees(x_train_v, y_train_v, x_valid, y_valid)
-# generateGradientBoosting(x_train_v, y_train_v, x_valid, y_valid)
+# Ensemble.generateGradientBoosting(x_train_v, y_train_v, x_valid, y_valid)
+# print(x_train.columns)
+# models = ["RandomForestRegressor","ExtraTreesRegressor", "DecisionTreeRegressor"]
+# for model in models:
+#     optimization(x_train_v, y_train_v, model)
+
+# optimizationRF(x_valid, y_valid)
+optimizationRFParam(x_train_v, y_train_v, x_valid, y_valid)

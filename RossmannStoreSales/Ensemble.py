@@ -5,7 +5,8 @@ import numpy as np
 from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 
-from RossmannStoreSales.Compare import compareResultMM, compareResultPure
+from RossmannStoreSales import LossFuction
+from RossmannStoreSales.Compare import compareResult, compareResultMM, compareResultPure
 from RossmannStoreSales.Preprocess import preprocessMM
 
 
@@ -25,7 +26,7 @@ def generateRandomForest(x_train, y_train, x_valid, y_valid):
     reg = RandomForestRegressor()
     reg.fit(x_train, y_train)
     compareResultMM(reg, x_valid, y_valid, "RandomForestRegressor")
-    joblib.dump(reg, '../model/RandomForestRegressor.pkl')
+    # joblib.dump(reg, '../model/RandomForestRegressor.pkl')
 
 
 def extraTrees(x_train, y_train):
@@ -47,7 +48,7 @@ def generateExtraTrees(x_train, y_train, x_valid, y_valid):
     joblib.dump(reg, '../model/ExtraTreesRegressor.pkl')
 
 
-def GradientBoosting(x_train, y_train):
+def gradientBoosting(x_train, y_train):
     # x_train, y_train = preprocessMM(x_train, y_train)
     reg = GradientBoostingRegressor()
     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
@@ -61,6 +62,17 @@ def generateGradientBoosting(x_train, y_train, x_valid, y_valid):
     reg.fit(x_train, y_train)
     compareResultPure(reg, x_valid, y_valid, "GradientBoostingRegressor")
     joblib.dump(reg, '../model/GradientBoostingRegressor.pkl')
+
+
+
+
+
+
+
+
+
+
+
 
 #
 # def randomForestPerStore(train, valid):

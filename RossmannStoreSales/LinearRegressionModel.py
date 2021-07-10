@@ -1,10 +1,9 @@
 import joblib
 import numpy as np
-import pandas
-
 from sklearn import linear_model
 from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+
 from RossmannStoreSales import LossFuction
 from RossmannStoreSales.Compare import compareResult
 from RossmannStoreSales.Preprocess import preprocess
@@ -57,6 +56,15 @@ def ridgeRegression(x_train, y_train, alpha):
     print("mean score: ", mean_score)
     return mean_score
 
+
+def generateRidgeRegression(x_train, y_train, alpha, x_valid, y_valid):
+    x_train, y_train = preprocess(x_train, y_train)
+    reg = linear_model.Ridge(alpha=alpha)
+    reg.fit(x_train, y_train)
+    compareResult(reg, x_valid, y_valid, "RidgeRegression")
+    joblib.dump(reg, '../model/RidgeRegression.pkl')
+
+
 def lassoRegression(x_train, y_train, alpha):
     x_train, y_train = preprocess(x_train, y_train)
     reg = linear_model.Lasso(alpha=alpha)
@@ -68,12 +76,12 @@ def lassoRegression(x_train, y_train, alpha):
     return mean_score
 
 
-def generateRidgeRegression(x_train, y_train, alpha, x_valid, y_valid):
+def generateLassoRegression(x_train, y_train, alpha, x_valid, y_valid):
     x_train, y_train = preprocess(x_train, y_train)
-    reg = linear_model.Ridge(alpha=alpha)
+    reg = linear_model.Lasso(alpha=alpha)
     reg.fit(x_train, y_train)
-    compareResult(reg, x_valid, y_valid, "RidgeRegression")
-    joblib.dump(reg, '../model/RidgeRegression.pkl')
+    compareResult(reg, x_valid, y_valid, "LassoRegression")
+    joblib.dump(reg, '../model/LassoRegression.pkl')
 
 
 def linearRegressionPerStore(train, valid):
