@@ -1,7 +1,7 @@
 import pandas
 from sklearn.model_selection import train_test_split
 
-from RossmannStoreSales.Optimization import optimizationRFPerMonth, optimizationRFTotal
+from RossmannStoreSales.Optimization import optimizationRFPerMonth, optimizationRFTotal, optimizationRFParam
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -275,14 +275,14 @@ x_valid = valid.drop("Sales", axis=1)
 # for model in models:
 #     optimization(x_train_v, y_train_v, model)
 
-optimizationRFTotal(valid)
+# optimizationRFTotal(valid)
 # optimizationRFPerMonth(valid)
 
-# train_opt = train[train["Year"] == 2015].iloc[:10000]
-# valid_opt = valid[valid["Year"] == 2015].iloc[:1000]
-# y_train_opt = train["Sales"]
-# x_train_opt = train.drop("Sales", axis=1)
-# # valid = valid[valid["Sales"] > 0]
-# y_valid_opt = valid["Sales"]
-# x_valid_opt = valid.drop("Sales", axis=1)
-# optimizationRFParam(x_train_opt, y_train_opt, x_valid_opt, y_valid_opt)
+train_opt = train[train["Year"] == 2015].iloc[:10000]
+valid_opt = valid[valid["Year"] == 2015].iloc[:1000]
+y_train_opt = train["Sales"]
+x_train_opt = train.drop("Sales", axis=1)
+# valid = valid[valid["Sales"] > 0]
+y_valid_opt = valid["Sales"]
+x_valid_opt = valid.drop("Sales", axis=1)
+optimizationRFParam(x_train_opt, y_train_opt, x_valid_opt, y_valid_opt)

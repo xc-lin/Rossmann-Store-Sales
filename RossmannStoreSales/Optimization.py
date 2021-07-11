@@ -117,10 +117,10 @@ def optimizationRFParam(x_train, y_train, x_valid, y_valid):
     # x_train = x_train[x_train["Year"] == 2015].iloc[:10000]
     # x_valid = x_valid[x_valid["Year"] == 2015].iloc[:10000]
     param = {"n_estimators": range(150, 200, 10),
-             "min_samples_leaf": range(10, 100, 20)
+             "min_samples_leaf": range(1, 10, 2)
              }
     t1 = time.time()
-    reg = RandomForestRegressor()
+    reg = RandomForestRegressor(n_jobs=-1)
     gs = GridSearchCV(estimator=reg, param_grid=param)
     gs.fit(x_train, y_train)
     t2 = time.time()
