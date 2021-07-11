@@ -1,13 +1,15 @@
 import pandas
+import seaborn as sns
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
-
-from RossmannStoreSales.Optimization import optimizationRFPerMonth, optimizationRFTotal, optimizationRFParam
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
 store_data = pandas.read_csv("../input/store.csv")
 train_data = pandas.read_csv("../input/train.csv")
 test_data = pandas.read_csv("../input/test.csv")
+
+
 print("------train_data------")
 print(train_data.info())
 print(train_data.head())
@@ -45,6 +47,7 @@ train_data["IsInPromo"] = train_data.apply(lambda x: 1 if x["Month"] in x["Promo
 train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split("-")[1]))
 # print(train_data.head())
 letterToNum = {"0": 0, "a": 1, "b": 2, "c": 3, "d": 4}
+# train_data = train_data[train_data["Sales"] > 0]
 train_data["StoreType"] = train_data["StoreType"].map(letterToNum)
 train_data["Assortment"] = train_data["Assortment"].map(letterToNum)
 train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
@@ -96,7 +99,7 @@ plt.xlabel("Month")
 plt.ylabel("Sales")
 plt.show()
 
-
+'''
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(16, 8))
 Sales_StoreType = train_data.groupby("StoreType", as_index=False)[["Sales"]].mean()
 plt.title("Average sale of every StoreType")
@@ -113,6 +116,13 @@ plt.xlabel("CompetitionDistance")
 plt.ylabel("Sales")
 plt.show()
 
+open_Sales = train_data.groupby("Open", as_index=False)[["Sales"]].mean()
+sns.barplot(data=open_Sales, x="Open", y="Sales")
+plt.xlabel("Open")
+plt.ylabel("Sales")
+plt.show()
+
+'''
 
 sns.boxplot(data=train_data, x="Promo", y="Sales")
 plt.show()
@@ -278,11 +288,11 @@ x_valid = valid.drop("Sales", axis=1)
 # optimizationRFTotal(valid)
 # optimizationRFPerMonth(valid)
 
-train_opt = train[train["Year"] == 2015].iloc[:10000]
-valid_opt = valid[valid["Year"] == 2015].iloc[:1000]
-y_train_opt = train["Sales"]
-x_train_opt = train.drop("Sales", axis=1)
-# valid = valid[valid["Sales"] > 0]
-y_valid_opt = valid["Sales"]
-x_valid_opt = valid.drop("Sales", axis=1)
-optimizationRFParam(x_train_opt, y_train_opt, x_valid_opt, y_valid_opt)
+# train_opt = train[train["Year"] == 2015].iloc[:10000]
+# valid_opt = valid[valid["Year"] == 2015].iloc[:1000]
+# y_train_opt = train["Sales"]
+# x_train_opt = train.drop("Sales", axis=1)
+# # valid = valid[valid["Sales"] > 0]
+# y_valid_opt = valid["Sales"]
+# x_valid_opt = valid.drop("Sales", axis=1)
+# optimizationRFParam(x_train_opt, y_train_opt, x_valid_opt, y_valid_opt)
