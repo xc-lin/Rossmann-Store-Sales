@@ -9,7 +9,6 @@ store_data = pandas.read_csv("../input/store.csv")
 train_data = pandas.read_csv("../input/train.csv")
 test_data = pandas.read_csv("../input/test.csv")
 
-
 print("------train_data------")
 print(train_data.info())
 print(train_data.head())
@@ -20,8 +19,9 @@ print(store_data.info())
 print(store_data.head())
 print(store_data.isnull().sum())
 print()
-store_data[store_data["PromoInterval"].isnull()] = ""
 store_data.fillna(0, inplace=True)
+store_data["PromoInterval"] = store_data["PromoInterval"].apply(lambda x: "" if x == 0 else x)
+
 print("------test_data-------")
 print(test_data.info())
 print(test_data.head())
@@ -31,7 +31,6 @@ print(test_data[test_data.isnull().T.any()])
 null_data = test_data.isnull().T.any()
 # set
 test_data["Open"][null_data] = (test_data["DayOfWeek"][null_data] != 7).astype(int)
-
 #
 
 train_data = pandas.merge(train_data, store_data, on="Store")
@@ -52,6 +51,7 @@ train_data["StoreType"] = train_data["StoreType"].map(letterToNum)
 train_data["Assortment"] = train_data["Assortment"].map(letterToNum)
 train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
 train_data["StateHoliday"] = train_data["StateHoliday"].map(letterToNum).astype(int)
+print("-"*100)
 print(train_data.info())
 
 # train_data = train_data.drop("Promo2SinceWeek", axis=1)
@@ -73,7 +73,7 @@ salesPerYear = train_data.groupby("Year", as_index=False)[["Sales"]].mean()
 
 plt.subplot(3, 1, 1)
 plt.title("Average sale of every year")
-sns.barplot(salesPerYear["Year"], salesPerYear["Sales"])
+sns.barplot(data=salesPerYear,x="Year", y="Sales")
 plt.xlabel("Year")
 plt.ylabel("Sales")
 
@@ -99,15 +99,15 @@ plt.xlabel("Month")
 plt.ylabel("Sales")
 plt.show()
 
-'''
+
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(16, 8))
 Sales_StoreType = train_data.groupby("StoreType", as_index=False)[["Sales"]].mean()
 plt.title("Average sale of every StoreType")
-sns.barplot(Sales_StoreType["StoreType"], Sales_StoreType["Sales"], ax=sub1)
+sns.barplot(data=Sales_StoreType,x="StoreType", y="Sales", ax=sub1)
 
 Sales_Assortment = train_data.groupby("Assortment", as_index=False)[["Sales"]].mean()
 plt.title("Average sale of every Assortment")
-sns.barplot(Sales_Assortment["Assortment"], Sales_Assortment["Sales"], ax=sub2)
+sns.barplot(data=Sales_Assortment,x="Assortment", y="Sales", ax=sub2)
 plt.show()
 
 competitionDistance_Sales = train_data.groupby("CompetitionDistance", as_index=False)[["Sales"]].mean()
@@ -122,14 +122,14 @@ plt.xlabel("Open")
 plt.ylabel("Sales")
 plt.show()
 
-'''
+
 
 sns.boxplot(data=train_data, x="Promo", y="Sales")
 plt.show()
 
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
-sns.scatterplot(train_data["Customers"], train_data["Sales"], hue=train_data["Promo"], ax=sub1)
-sns.scatterplot(train_data["Customers"], train_data["Sales"], hue=train_data["Promo2"], ax=sub2)
+sns.scatterplot(data=train_data,x="Customers", y="Sales", hue="Promo", ax=sub1)
+sns.scatterplot(data=train_data,x="Customers", y="Sales", hue="Promo2", ax=sub2)
 plt.show()
 
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
@@ -148,8 +148,8 @@ sns.pointplot(data=sales_of_weekday, x="DayOfWeek", y="Sales", markers="o")
 plt.show()
 
 a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
-sns.scatterplot(train_data, x="Customers", y="Sales", hue=train_data["SchoolHoliday"], ax=sub1)
-sns.scatterplot(train_data, x="Customers", y="Sales", hue=train_data["StateHoliday"], ax=sub2)
+sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="SchoolHoliday", ax=sub1)
+sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="StateHoliday", ax=sub2)
 plt.show()
 
 
@@ -174,7 +174,9 @@ sns.barplot(data=promo_sales, x="IsInPromo", y="Sales")
 plt.show()
 sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
 plt.show()
+
 '''
+
 
 extractedFeatures = ["DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
                      "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek",
@@ -199,9 +201,8 @@ x_train_v = train.drop("Sales", axis=1)
 # valid = valid[valid["Sales"] > 0]
 y_valid = valid["Sales"]
 x_valid = valid.drop("Sales", axis=1)
-# print("-------------------")
-# print(train_data.loc[(train_data["Sales"] == 5822) & (train_data["Store"] == 759)])
-# print("=====================")
+
+
 # ss = StandardScaler()
 #
 # # train_data = train_data[train_data["Sales"] > 0]
