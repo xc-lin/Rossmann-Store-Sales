@@ -5,17 +5,17 @@ import numpy as np
 from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 
-from RossmannStoreSales import LossFuction
-from RossmannStoreSales.Compare import compareResult, compareResultMM, compareResultPure
-from RossmannStoreSales.Preprocess import preprocessMM
+from RossmannStoreSales.Compare import compareResultMM, compareResultPure
+from RossmannStoreSales.Preprocess import preprocessMM, preprocess
 
 
-def randomForest(x_train, y_train):
-    x_train, y_train = preprocessMM(x_train, y_train)
+def randomForest(x_train, y_train,n):
+    x_train, y_train = preprocess(x_train, y_train)
     reg = RandomForestRegressor()
     t5 = time.time()
-    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
+    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(n))
     t6 = time.time()
+    print("randomForest: ",n)
     print("10-folder cross validation score: ", score)
     print("mean score: ", np.mean(score))
     print("time: ", t6 - t5)
@@ -26,7 +26,7 @@ def generateRandomForest(x_train, y_train, x_valid, y_valid):
     reg = RandomForestRegressor()
     reg.fit(x_train, y_train)
     compareResultMM(reg, x_valid, y_valid, "RandomForestRegressor")
-    # joblib.dump(reg, '../model/RandomForestRegressor.pkl')
+    joblib.dump(reg, '../model/RandomForestRegressor.pkl')
 
 
 def extraTrees(x_train, y_train):
@@ -35,6 +35,7 @@ def extraTrees(x_train, y_train):
     t5 = time.time()
     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
     t6 = time.time()
+    print("extraTrees:")
     print("10-folder cross validation score: ", score)
     print("mean score: ", np.mean(score))
     print("time: ", t6 - t5)
@@ -53,6 +54,7 @@ def gradientBoosting(x_train, y_train):
     reg = GradientBoostingRegressor()
     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
     # reg.fit(x_train, y_train)
+    print("gradientBoosting")
     print("10-folder cross validation score: ", score)
     print("mean score: ", np.mean(score))
 

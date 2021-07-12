@@ -13,12 +13,6 @@ from RossmannStoreSales.Preprocess import preprocess, preprocessMM
 
 def optimization(x_train, y_train, model):
     reg = joblib.load("../model/%s.pkl" % model)
-    if model == "DecisionTreeRegressor":
-        x_train, y_train = preprocess(x_train, y_train)
-        # dot_data = tree.export_graphviz(decision_tree=reg, max_depth=5, feature_names=x_train.columns,
-        #                                 filled=True, rounded=True, out_file=None)
-        # graph = pydotplus.graph_from_dot_data(dot_data)
-        # graph.write_pdf("tree.pdf")
     importance_metrics = pandas.Series(reg.feature_importances_, index=x_train.columns).sort_values()
     plt.figure(figsize=(14, 7))
     # plt.style.use('ggplot')
@@ -34,10 +28,10 @@ def optimizationRFTotal(valid):
     y_valid = valid["Sales"]
     x_valid = valid.drop("Sales", axis=1)
     x_valid, y_valid = preprocessMM(x_valid, y_valid)
-    w = 0.95
+    w = 0.93
     ws = []
     errors = []
-    while w < 1:
+    while w < 0.95:
         y_hat = reg.predict(x_valid) * w
         ws.append(w)
         error = LossFuction.basicRmspe(y_valid.values, y_hat)
@@ -53,9 +47,10 @@ def optimizationRFTotal(valid):
     plt.xlabel("W")
     plt.ylabel("Error")
     plt.show()
-    plt.plot(y_hat[::100])
-    plt.plot(y_hat[::100] * w)
-    plt.plot(y_valid.iloc[::100].values)
+    y_hat = reg.predict(x_valid)
+    plt.plot(y_hat[::200])
+    plt.plot(y_hat[::200] * w)
+    plt.plot(y_valid.iloc[::200].values)
     plt.legend(["original y_hat(RandomForestRegressor)", "apply overall correction factor", "real"])
     plt.show()
 
@@ -69,7 +64,7 @@ def optimizationRFPerMonth(valid):
     print(reg.score(x_valid, y_valid))
     y_hat = reg.predict(x_valid)
     y_hat = np.array(y_hat)
-    overall_correction_factor = 0.961500
+    overall_correction_factor = 0.934600
     w_month = {}
     prev = 0
     for month in range(1, 13):
@@ -103,9 +98,9 @@ def optimizationRFPerMonth(valid):
         prev = curr
     error = LossFuction.basicRmspe(y_valid.values, y_hat)
     print("after applying factors for every months, error: ", error)
-    plt.plot(y_hat_overall[::100])
-    plt.plot(y_hat[::100])
-    plt.plot(y_valid.iloc[::100].values)
+    plt.plot(y_hat_overall[::200])
+    plt.plot(y_hat[::200])
+    plt.plot(y_valid.iloc[::200].values)
     plt.legend(["apply overall correction factor", "after applying factors for every months", "real"])
     plt.show()
 

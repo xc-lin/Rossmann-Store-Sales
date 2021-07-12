@@ -1,7 +1,7 @@
 import pandas
-import seaborn as sns
-from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
+
+from RossmannStoreSales import Ensemble
 
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
@@ -19,6 +19,7 @@ print(store_data.info())
 print(store_data.head())
 print(store_data.isnull().sum())
 print()
+# store_data[store_data["PromoInterval"].isnull()] = ""
 store_data.fillna(0, inplace=True)
 store_data["PromoInterval"] = store_data["PromoInterval"].apply(lambda x: "" if x == 0 else x)
 
@@ -26,6 +27,7 @@ print("------test_data-------")
 print(test_data.info())
 print(test_data.head())
 print(test_data[test_data.isnull().T.any()])
+print("-" * 100)
 # the data in train data of store 622 is open except 7
 # print(train_data.loc[train_data["Store"] == 622][["DayOfWeek", "Open"]])
 null_data = test_data.isnull().T.any()
@@ -51,8 +53,6 @@ train_data["StoreType"] = train_data["StoreType"].map(letterToNum)
 train_data["Assortment"] = train_data["Assortment"].map(letterToNum)
 train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
 train_data["StateHoliday"] = train_data["StateHoliday"].map(letterToNum).astype(int)
-print("-"*100)
-print(train_data.info())
 
 # train_data = train_data.drop("Promo2SinceWeek", axis=1)
 # train_data = train_data.drop("Promo2", axis=1)
@@ -177,7 +177,6 @@ plt.show()
 
 '''
 
-
 extractedFeatures = ["DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
                      "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek",
                      "Promo2SinceYear"]
@@ -187,7 +186,7 @@ train_data["CompetitionDistance"] = train_data["CompetitionDistance"].astype(int
 train_data["Promo2"] = train_data["Promo2"].astype(int)
 train_data["Promo2SinceWeek"] = train_data["Promo2SinceWeek"].astype(int)
 train_data["Promo2SinceYear"] = train_data["Promo2SinceYear"].astype(int)
-
+# train_data=train_data[train_data["Sales"]>0]
 x_train = train_data[extractedFeatures]
 y_train = train_data["Sales"]
 
@@ -201,7 +200,6 @@ x_train_v = train.drop("Sales", axis=1)
 # valid = valid[valid["Sales"] > 0]
 y_valid = valid["Sales"]
 x_valid = valid.drop("Sales", axis=1)
-
 
 # ss = StandardScaler()
 #
@@ -223,15 +221,15 @@ x_valid = valid.drop("Sales", axis=1)
 # LinearRegressionModel.linearRegression(x_train, y_train)
 
 # LinearRegressionModel.sgdRegression(x_train, y_train)
-#
+
 # alphas = []
 # alpha = 0
 # mean_scores = []
-# while alpha < 50:
+# while alpha < 100:
 #     alphas.append(alpha)
 #     mean_score = LinearRegressionModel.ridgeRegression(x_train, y_train, alpha=alpha)
 #     print("alpha: ", alpha)
-#     alpha += 0.5
+#     alpha += 5
 #     mean_scores.append(mean_score)
 # maxV = max(mean_scores)
 # index = mean_scores.index(maxV)
@@ -240,7 +238,8 @@ x_valid = valid.drop("Sales", axis=1)
 # plt.xlabel("alpha")
 # plt.ylabel("mean score")
 # plt.show()
-#
+
+
 # alphas = []
 # alpha = 0
 # mean_scores = []
@@ -260,11 +259,10 @@ x_valid = valid.drop("Sales", axis=1)
 # plt.ylabel("mean score")
 # plt.show()
 
-# LinearRegressionModel.linearRegressionPerStore(train, valid)
 
 # Tree.decisionTree(x_train, y_train)
-
-# Ensemble.randomForest(x_train, y_train)
+for i in range(2, 10):
+    Ensemble.randomForest(x_train, y_train,i)
 
 # Ensemble.extraTrees(x_train, y_train)
 
@@ -285,7 +283,6 @@ x_valid = valid.drop("Sales", axis=1)
 # models = ["RandomForestRegressor","ExtraTreesRegressor", "DecisionTreeRegressor"]
 # for model in models:
 #     optimization(x_train_v, y_train_v, model)
-
 # optimizationRFTotal(valid)
 # optimizationRFPerMonth(valid)
 
