@@ -211,65 +211,65 @@ store.Assortment = LabelEncoder().fit_transform(store.Assortment)  # encoding As
 
 
 
-join_with = store['PromoInterval'].str.split(',').apply(pd.Series)
-join_with.columns = join_with.columns.map(lambda x: str(x) + '_PromoInterval')
-store = store.join(join_with)  # joining splits
+# join_with = store['PromoInterval'].str.split(',').apply(pd.Series)
+# join_with.columns = join_with.columns.map(lambda x: str(x) + '_PromoInterval')
+# store = store.join(join_with)  # joining splits
 
+#
+# def monthToNum(value):
+#     if (value == 'Sept'):
+#         value = 'Sep'
+#     return list(calendar.month_abbr).index(value)
+#
+#
+# # mapping month abbr to month number
+# store['0_PromoInterval'] = store['0_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
+# store['1_PromoInterval'] = store['1_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
+# store['2_PromoInterval'] = store['2_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
+# store['3_PromoInterval'] = store['3_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
+#
+# competition_open = []
+# for index, value in store[['CompetitionOpenSinceMonth', 'CompetitionOpenSinceYear']].iterrows():
+#     try:
+#         year, month = int(value['CompetitionOpenSinceYear']), int(value['CompetitionOpenSinceMonth'])
+#         date = pd.to_datetime("{}-{}-01".format(year, month), format='%Y-%m')
+#         competition_open.append(date)
+#     except:
+#         competition_open.append(np.nan)
+# competition_open = pd.Series(competition_open)
+# competition_open.shape
+#
+# store['CompetitionOpen'] = competition_open  # converted int to datetime
+# store['CompetitionOpen'] = store.CompetitionOpen.dt.strftime('%Y%m%d')
+#
+# promo = []
+# for index, value in store[['Promo2SinceWeek', 'Promo2SinceYear']].iterrows():
+#     try:
+#         year, week = int(value['Promo2SinceYear']), int(value['Promo2SinceWeek'])
+#         date = pd.to_datetime("{}-{}-01".format(year, week), format='%Y%W')
+#         promo.append(date)
+#     except:
+#         promo.append(np.nan)
+# promo = pd.to_datetime(pd.Series(competition_open))
+# promo.shape
+#
+# store['PromoSince'] = promo  # converted int to datetime
+# store['PromoSince'] = store.PromoSince.dt.strftime('%Y%m%d')
 
-def monthToNum(value):
-    if (value == 'Sept'):
-        value = 'Sep'
-    return list(calendar.month_abbr).index(value)
-
-
-# mapping month abbr to month number
-store['0_PromoInterval'] = store['0_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
-store['1_PromoInterval'] = store['1_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
-store['2_PromoInterval'] = store['2_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
-store['3_PromoInterval'] = store['3_PromoInterval'].map(lambda x: monthToNum(x) if str(x) != 'nan' else np.nan)
-
-competition_open = []
-for index, value in store[['CompetitionOpenSinceMonth', 'CompetitionOpenSinceYear']].iterrows():
-    try:
-        year, month = int(value['CompetitionOpenSinceYear']), int(value['CompetitionOpenSinceMonth'])
-        date = pd.to_datetime("{}-{}-01".format(year, month), format='%Y-%m')
-        competition_open.append(date)
-    except:
-        competition_open.append(np.nan)
-competition_open = pd.Series(competition_open)
-competition_open.shape
-
-store['CompetitionOpen'] = competition_open  # converted int to datetime
-store['CompetitionOpen'] = store.CompetitionOpen.dt.strftime('%Y%m%d')
-
-promo = []
-for index, value in store[['Promo2SinceWeek', 'Promo2SinceYear']].iterrows():
-    try:
-        year, week = int(value['Promo2SinceYear']), int(value['Promo2SinceWeek'])
-        date = pd.to_datetime("{}-{}-01".format(year, week), format='%Y%W')
-        promo.append(date)
-    except:
-        promo.append(np.nan)
-promo = pd.to_datetime(pd.Series(competition_open))
-promo.shape
-
-store['PromoSince'] = promo  # converted int to datetime
-store['PromoSince'] = store.PromoSince.dt.strftime('%Y%m%d')
-
-store_features = ['Store', 'StoreType', 'Assortment', 'CompetitionDistance', 'CompetitionOpen',
-                  'PromoSince', '0_PromoInterval']
+store_features = ['Store', 'StoreType', 'Assortment', 'CompetitionDistance',
+                  "Promo2SinceWeek", "Promo2SinceYear", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear"]
 # 1_PromoInterval, 2_PromoInterval, 3_PromoInterval irrelevent
 
 df = pd.merge(df, store[store_features], how='left', on=['Store'])
-
+# 所有的features
 features_x = list(set(features_x + store_features))
 
 for feature in features_x:
     df[feature] = df[feature].fillna(-999)  # out of range value for model
 
-df['DateInt'] = df.Date.dt.strftime('%Y%m%d').map(int)  # mapping to Int
-df['CompetitionOpen'] = df.CompetitionOpen.map(int)
-df['PromoSince'] = df.PromoSince.map(int)
+# df['DateInt'] = df.Date.dt.strftime('%Y%m%d').map(int)  # mapping to Int
+# df['CompetitionOpen'] = df.CompetitionOpen.map(int)
+# df['PromoSince'] = df.PromoSince.map(int)
 
 df['Zscore'] = (df.Sales - df.Sales.mean()) / df.Sales.std()
 
@@ -304,7 +304,12 @@ store_features = ['Store', 'SalesPerDay', 'CustomersPerDay', 'SalesPerCustomersP
 features_x = list(set(features_x + store_features))
 df = pd.merge(df, df_store[store_features], how='left', on=['Store'])
 
+
+
+
 holidays_each_day_of_week = df.groupby(df.DayOfWeek).sum().StateHoliday
+# print(holidays_each_day_of_week)
+# exit()
 df = pd.merge(df, holidays_each_day_of_week.reset_index(name='HolidaysPerDayOfWeek'), on=['DayOfWeek'])
 
 school_holidays_each_day_of_week = df.groupby(df.DayOfWeek).sum().SchoolHoliday
@@ -312,59 +317,59 @@ df = pd.merge(df, school_holidays_each_day_of_week.reset_index(name='SchoolHolid
 
 promo_each_day_of_week = df.groupby(df.DayOfWeek).sum().Promo
 df = pd.merge(df, promo_each_day_of_week.reset_index(name='PromoPerDayOfWeek'), on=['DayOfWeek'])
-
-holidays_next_week = []
-holidays_next_week_index = []
-for index, value in df.groupby(df.Date).sum().iterrows():
-    start_range = index + datetime.timedelta(days=7)
-    end_range = index + datetime.timedelta(days=15)
-    school_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).SchoolHoliday)
-    state_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).StateHoliday)
-    holidays_next_week.append(school_holidays + state_holidays)
-    holidays_next_week_index.append(index)
-
-holidays_next_week = pd.Series(holidays_next_week)
-holidays_next_week.shape
-
-holidays_this_week = []
-index_list = []
-for index, value in df.groupby(df.Date).sum().iterrows():
-    start_range = index
-    end_range = index + datetime.timedelta(days=7)
-    school_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).SchoolHoliday)
-    state_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).StateHoliday)
-    holidays_this_week.append(school_holidays + state_holidays)
-    index_list.append(index)
-
-holidays_this_week = pd.Series(holidays_this_week)
-holidays_this_week.shape
-
-holidays_last_week = []
-holidays_last_week_index = []
-for index, value in df.groupby(df.Date).sum().iterrows():
-    start_range = index - datetime.timedelta(days=7)
-    end_range = index + datetime.timedelta(days=1)
-    school_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).SchoolHoliday)
-    state_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).StateHoliday)
-    holidays_last_week.append(school_holidays + state_holidays)
-    holidays_last_week_index.append(index)
-
-holidays_last_week = pd.Series(holidays_next_week)
-holidays_last_week.shape
-
-temp_df = pd.DataFrame({'HolidaysNextWeek': holidays_next_week, 'Date': holidays_next_week_index})
-df = pd.merge(df, temp_df, on=['Date'])
-
-temp_df = pd.DataFrame({'HolidaysThisWeek': holidays_this_week, 'Date': index_list})
-df = pd.merge(df, temp_df, on=['Date'])
-
-temp_df = pd.DataFrame({'HolidaysLastWeek': holidays_last_week, 'Date': holidays_last_week_index})
-df = pd.merge(df, temp_df, on=['Date'])
-
-holidays_features = ['HolidaysPerDayOfWeek', 'SchoolHolidaysPerDayOfWeek', 'PromoPerDayOfWeek',
-                     'HolidaysNextWeek', 'HolidaysThisWeek', 'HolidaysLastWeek']
-
-features_x = list(set(features_x + holidays_features))
+#
+# holidays_next_week = []
+# holidays_next_week_index = []
+# for index, value in df.groupby(df.Date).sum().iterrows():
+#     start_range = index + datetime.timedelta(days=7)
+#     end_range = index + datetime.timedelta(days=15)
+#     school_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).SchoolHoliday)
+#     state_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).StateHoliday)
+#     holidays_next_week.append(school_holidays + state_holidays)
+#     holidays_next_week_index.append(index)
+#
+# holidays_next_week = pd.Series(holidays_next_week)
+# print("holidays_this_week",holidays_next_week)
+#
+# holidays_this_week = []
+# index_list = []
+# for index, value in df.groupby(df.Date).sum().iterrows():
+#     start_range = index
+#     end_range = index + datetime.timedelta(days=7)
+#     school_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).SchoolHoliday)
+#     state_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).StateHoliday)
+#     holidays_this_week.append(school_holidays + state_holidays)
+#     index_list.append(index)
+#
+# holidays_this_week = pd.Series(holidays_this_week)
+# print("holidays_this_week",holidays_this_week)
+#
+# holidays_last_week = []
+# holidays_last_week_index = []
+# for index, value in df.groupby(df.Date).sum().iterrows():
+#     start_range = index - datetime.timedelta(days=7)
+#     end_range = index + datetime.timedelta(days=1)
+#     school_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).SchoolHoliday)
+#     state_holidays = sum((df.groupby(df.Date).sum()[start_range:end_range]).StateHoliday)
+#     holidays_last_week.append(school_holidays + state_holidays)
+#     holidays_last_week_index.append(index)
+#
+# holidays_last_week = pd.Series(holidays_next_week)
+# holidays_last_week.shape
+#
+# temp_df = pd.DataFrame({'HolidaysNextWeek': holidays_next_week, 'Date': holidays_next_week_index})
+# df = pd.merge(df, temp_df, on=['Date'])
+#
+# temp_df = pd.DataFrame({'HolidaysThisWeek': holidays_this_week, 'Date': index_list})
+# df = pd.merge(df, temp_df, on=['Date'])
+#
+# temp_df = pd.DataFrame({'HolidaysLastWeek': holidays_last_week, 'Date': holidays_last_week_index})
+# df = pd.merge(df, temp_df, on=['Date'])
+#
+# holidays_features = ['HolidaysPerDayOfWeek', 'SchoolHolidaysPerDayOfWeek', 'PromoPerDayOfWeek',
+#                      'HolidaysNextWeek', 'HolidaysThisWeek', 'HolidaysLastWeek']
+#
+# features_x = list(set(features_x + holidays_features))
 
 # Most Promos are done on DayofWeek 4
 df['DaysTillMaxPromo'] = df.DayOfWeek.apply(lambda x: 4 - x)
@@ -380,7 +385,8 @@ df.Sales = df.Sales.apply(lambda x: np.nan if x == 0 else x)  # Convert 0 to NaN
 
 df.loc[df['is_train'] == 1, 'SalesLog'] = np.log(
     1 + df.loc[df['is_train'] == 1]['Sales'])  # Transforming Sales to 1+log
-
+# df["PromoInterval"] = df["PromoInterval"].apply(lambda x: "" if x == 0 else x)
+# df["IsInPromo"] = df.apply(lambda x: 1 if x["DateMonth"] in x["PromoInterval"] else 0, axis=1)
 import xgboost as xgb
 
 data = df.loc[(df['is_train'] == 1) & (df['Open'] == 1) & (df['Outlier'] == False)]
@@ -389,7 +395,8 @@ x_train, x_test, y_train, y_test = train_test_split(data[features_x],
                                                     test_size=0.1,
                                                     random_state=42)
 print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
-
+print(x_train.info())
+print(x_test.info())
 dtrain = xgb.DMatrix(x_train, y_train)
 dtest = xgb.DMatrix(x_test, y_test)
 
@@ -403,10 +410,10 @@ param = {'max_depth': 9,
          'objective': 'reg:squarederror', }
 
 plst = list(param.items())
-
+print(123)
 model = xgb.train(plst, dtrain, num_round, evallist,
                   feval=rmspe_xg, verbose_eval=250, early_stopping_rounds=250)
-
+print(123)
 # Print Feature Importance
 plt.figure(figsize=(18, 8))
 from xgboost import plot_importance
