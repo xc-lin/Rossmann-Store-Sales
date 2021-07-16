@@ -1,5 +1,5 @@
 import numpy as np
-import xgboost as xgb
+import Xgboost as xgb
 from matplotlib import pyplot as plt
 from sklearn.model_selection import StratifiedKFold
 

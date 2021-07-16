@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 
 from RossmannStoreSales import Ensemble, LinearRegressionModel
 from RossmannStoreSales.Preprocess import preprocessMM
+from RossmannStoreSales.Xgboost import xgboost
 
 a = 0
 pandas.set_option("display.max_columns", 1000)
@@ -49,10 +50,11 @@ test_data["Open"][null_data] = (test_data["DayOfWeek"][null_data] != 7).astype(i
 
 train_data = pandas.merge(train_data, store_data, on="Store")
 test_data = pandas.merge(test_data, store_data, on="Store")
-
-
+# 添加
+train_data = train_data.loc[~((train_data['Open'] == 1) & (train_data['Sales'] == 0))]
 # so that we can compute the corr easily
 def dataProcess(data):
+
     data["Year"] = data["Date"].apply(lambda x: int(x.split("-")[0]))
     monthNumToWord = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", \
                       7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"}
@@ -62,6 +64,11 @@ def dataProcess(data):
     data["Day"] = data["Date"].apply(lambda x: int(x.split("-")[2]))
     data["IsInPromo"] = data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
     data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
+    # 添加
+    data["Date"] = pandas.to_datetime(data["Date"])
+    data["Week"] = data["Date"].dt.week
+    data["DayOfYear"] = data["Date"].dt.dayofyear
+    #
     # print(train_data.head())
     letterToNum = {"0": 0, "a": 1, "b": 2, "c": 3, "d": 4}
     # train_data = train_data[train_data["Sales"] > 0]
@@ -203,7 +210,7 @@ plt.show()
 
 '''
 
-extractedFeatures = ["DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
+extractedFeatures = ["Store","Week","DayOfYear","DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
                      "CompetitionDistance", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", "Promo2",
                      "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek", "Promo2SinceYear"]
 
@@ -214,14 +221,13 @@ y_train = train_data["Sales"]
 features = extractedFeatures
 features.append("Sales")
 train = train_data[features]
-train, valid = train_test_split(train, test_size=0.02, random_state=10)
+train, valid = train_test_split(train, test_size=0.1, random_state=42)
 
-y_train_v = train["Sales"]
+y_train_v = train[["Sales"]]
 x_train_v = train.drop("Sales", axis=1)
 # valid = valid[valid["Sales"] > 0]
-y_valid = valid["Sales"]
+y_valid = valid[["Sales"]]
 x_valid = valid.drop("Sales", axis=1)
-
 
 # LinearRegressionModel.linearRegression(x_train, y_train)
 #
@@ -303,7 +309,6 @@ x_valid = valid.drop("Sales", axis=1)
 #
 
 
-
 #
 # extractedFeatures.remove("Sales")
 # print(extractedFeatures)
@@ -328,7 +333,6 @@ x_valid = valid.drop("Sales", axis=1)
 #     factor += 0.0001
 
 
-
 #
 # extractedFeatures.remove("Sales")
 # print(extractedFeatures)
@@ -349,3 +353,10 @@ x_valid = valid.drop("Sales", axis=1)
 # # submission = Series(Y_pred, index=store_ids)
 # submission = pandas.DataFrame(submission)
 # submission.to_csv('submission.csv', index=False)
+
+
+extractedFeatures.remove("Sales")
+print(extractedFeatures)
+
+
+xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data,extractedFeatures)
