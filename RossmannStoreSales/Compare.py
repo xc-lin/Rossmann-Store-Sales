@@ -16,6 +16,7 @@ def compareResult(reg, x_valid, y_valid, model):
 def compareResultMM(reg, x_valid, y_valid, model):
     x_valid, y_valid = preprocessMM(x_valid, y_valid)
     y_hat = reg.predict(x_valid)
+    plt.subplots
     plt.title(model)
     plt.plot(y_hat[::200])
     plt.plot(y_valid.iloc[::200].values)

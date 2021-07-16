@@ -40,9 +40,9 @@ fig, (axis1) = plt.subplots(1, 1, figsize=(15, 4))
 sns.countplot(x='Open', hue='DayOfWeek', data=rossmann_df, palette="husl", ax=axis1)
 
 # fill NaN values in test_df with Open=1 if DayOfWeek != 7
-# test_df["Open"][test_df["Open"] != test_df["Open"]] = (test_df["DayOfWeek"] != 7).astype(int)
+test_df["Open"][test_df["Open"] != test_df["Open"]] = (test_df["DayOfWeek"] != 7).astype(int)
 # delete the data with nan value
-test_df = test_df.dropna(how='any', axis=0)
+# test_df = test_df.dropna(how='any', axis=0)
 
 # Drop Open column
 # rossmann_df.drop("Open", axis=1, inplace=True)

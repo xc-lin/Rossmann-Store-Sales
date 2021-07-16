@@ -1,8 +1,12 @@
+import joblib
 import pandas
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
-from RossmannStoreSales import Ensemble
+from RossmannStoreSales import Ensemble, LinearRegressionModel
+from RossmannStoreSales.Preprocess import preprocessMM
 
+a = 0
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
 store_data = pandas.read_csv("../input/store.csv")
@@ -20,9 +24,17 @@ print(store_data.head())
 print(store_data.isnull().sum())
 print()
 # store_data[store_data["PromoInterval"].isnull()] = ""
+
+# store_data["CompetitionDistance"] = store_data["CompetitionDistance"].fillna(
+#     store_data["CompetitionDistance"].mean())
+# columns = ['CompetitionDistance', 'CompetitionOpenSinceMonth', 'CompetitionOpenSinceYear',
+#            'Promo2SinceWeek', 'Promo2SinceYear']
+# for i in columns:
+#     store_data[i] = store_data[i].fillna(store_data[i].mode()[0])  # mode返回series，不是一个数
+# print(store_data.info())
 store_data.fillna(0, inplace=True)
 store_data["PromoInterval"] = store_data["PromoInterval"].apply(lambda x: "" if x == 0 else x)
-
+print(store_data.info())
 print("------test_data-------")
 print(test_data.info())
 print(test_data.head())
@@ -36,24 +48,38 @@ test_data["Open"][null_data] = (test_data["DayOfWeek"][null_data] != 7).astype(i
 #
 
 train_data = pandas.merge(train_data, store_data, on="Store")
+test_data = pandas.merge(test_data, store_data, on="Store")
+
 
 # so that we can compute the corr easily
-train_data["Year"] = train_data["Date"].apply(lambda x: int(x.split("-")[0]))
-monthNumToWord = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", \
-                  7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"}
-train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split("-")[1]))
-train_data["Month"] = train_data["Month"].map(monthNumToWord)
-train_data["Day"] = train_data["Date"].apply(lambda x: int(x.split("-")[2]))
-train_data["IsInPromo"] = train_data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
-train_data["Month"] = train_data["Date"].apply(lambda x: int(x.split("-")[1]))
-# print(train_data.head())
-letterToNum = {"0": 0, "a": 1, "b": 2, "c": 3, "d": 4}
-# train_data = train_data[train_data["Sales"] > 0]
-train_data["StoreType"] = train_data["StoreType"].map(letterToNum)
-train_data["Assortment"] = train_data["Assortment"].map(letterToNum)
-train_data["StateHoliday"] = train_data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
-train_data["StateHoliday"] = train_data["StateHoliday"].map(letterToNum).astype(int)
+def dataProcess(data):
+    data["Year"] = data["Date"].apply(lambda x: int(x.split("-")[0]))
+    monthNumToWord = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", \
+                      7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"}
+    data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
 
+    data["Month"] = data["Month"].map(monthNumToWord)
+    data["Day"] = data["Date"].apply(lambda x: int(x.split("-")[2]))
+    data["IsInPromo"] = data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
+    data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
+    # print(train_data.head())
+    letterToNum = {"0": 0, "a": 1, "b": 2, "c": 3, "d": 4}
+    # train_data = train_data[train_data["Sales"] > 0]
+    data["StoreType"] = data["StoreType"].map(letterToNum)
+    data["Assortment"] = data["Assortment"].map(letterToNum)
+    data["StateHoliday"] = data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
+    data["StateHoliday"] = data["StateHoliday"].map(letterToNum).astype(int)
+    data["Store"] = data["Store"].astype(int)
+    # train_data["CompetitionDistance"] = train_data["CompetitionDistance"].astype(int)
+    data["Promo2"] = data["Promo2"].astype(int)
+    data["Promo2SinceWeek"] = data["Promo2SinceWeek"].astype(int)
+    data["Promo2SinceYear"] = data["Promo2SinceYear"].astype(int)
+    data["CompetitionOpenSinceMonth"] = data["CompetitionOpenSinceMonth"].astype(int)
+    data["CompetitionOpenSinceYear"] = data["CompetitionOpenSinceYear"].astype(int)
+
+
+dataProcess(train_data)
+dataProcess(test_data)
 # train_data = train_data.drop("Promo2SinceWeek", axis=1)
 # train_data = train_data.drop("Promo2", axis=1)
 # train_data = train_data.drop("Promo2SinceYear", axis=1)
@@ -178,14 +204,9 @@ plt.show()
 '''
 
 extractedFeatures = ["DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
-                     "CompetitionDistance", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek",
-                     "Promo2SinceYear"]
+                     "CompetitionDistance", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", "Promo2",
+                     "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek", "Promo2SinceYear"]
 
-train_data["Store"] = train_data["Store"].astype(int)
-train_data["CompetitionDistance"] = train_data["CompetitionDistance"].astype(int)
-train_data["Promo2"] = train_data["Promo2"].astype(int)
-train_data["Promo2SinceWeek"] = train_data["Promo2SinceWeek"].astype(int)
-train_data["Promo2SinceYear"] = train_data["Promo2SinceYear"].astype(int)
 # train_data=train_data[train_data["Sales"]>0]
 x_train = train_data[extractedFeatures]
 y_train = train_data["Sales"]
@@ -193,7 +214,7 @@ y_train = train_data["Sales"]
 features = extractedFeatures
 features.append("Sales")
 train = train_data[features]
-train, valid = train_test_split(train, test_size=0.012, random_state=10)
+train, valid = train_test_split(train, test_size=0.02, random_state=10)
 
 y_train_v = train["Sales"]
 x_train_v = train.drop("Sales", axis=1)
@@ -201,27 +222,11 @@ x_train_v = train.drop("Sales", axis=1)
 y_valid = valid["Sales"]
 x_valid = valid.drop("Sales", axis=1)
 
-# ss = StandardScaler()
-#
-# # train_data = train_data[train_data["Sales"] > 0]
-#
-# train, valid = train_test_split(train_data[extractedFeatures], test_size=0.012, random_state=10)
-#
-# x_train = train.drop(["Sales"], axis=1)
-#
-# # x_train = ss.fit_transform(x_train)
-#
-# y_train = train["Sales"]
-#
-# x_valid = valid.drop("Sales", axis=1)
-# # x_valid = ss.fit_transform(x_valid)
-# y_valid = valid["Sales"]
-
 
 # LinearRegressionModel.linearRegression(x_train, y_train)
-
+#
 # LinearRegressionModel.sgdRegression(x_train, y_train)
-
+#
 # alphas = []
 # alpha = 0
 # mean_scores = []
@@ -238,8 +243,8 @@ x_valid = valid.drop("Sales", axis=1)
 # plt.xlabel("alpha")
 # plt.ylabel("mean score")
 # plt.show()
-
-
+#
+#
 # alphas = []
 # alpha = 0
 # mean_scores = []
@@ -260,12 +265,12 @@ x_valid = valid.drop("Sales", axis=1)
 # plt.show()
 
 
-# Tree.decisionTree(x_train, y_train)
-for i in range(2, 10):
-    Ensemble.randomForest(x_train, y_train,i)
-
+# Tree.decisionTree(x_train_v, y_train_v)
+# for i in range(2, 10):
+#     Ensemble.randomForest(x_train, y_train, i)
+# Ensemble.randomForest(x_train_v, y_train_v, 10)
 # Ensemble.extraTrees(x_train, y_train)
-
+#
 # Ensemble.gradientBoosting(x_train, y_train)
 
 #
@@ -285,7 +290,7 @@ for i in range(2, 10):
 #     optimization(x_train_v, y_train_v, model)
 # optimizationRFTotal(valid)
 # optimizationRFPerMonth(valid)
-
+#
 # train_opt = train[train["Year"] == 2015].iloc[:10000]
 # valid_opt = valid[valid["Year"] == 2015].iloc[:1000]
 # y_train_opt = train["Sales"]
@@ -294,3 +299,53 @@ for i in range(2, 10):
 # y_valid_opt = valid["Sales"]
 # x_valid_opt = valid.drop("Sales", axis=1)
 # optimizationRFParam(x_train_opt, y_train_opt, x_valid_opt, y_valid_opt)
+# print(test_data.info())
+#
+
+
+
+#
+# extractedFeatures.remove("Sales")
+# print(extractedFeatures)
+# test_data = test_data.sort_values("Id")
+# store_ids = test_data["Id"]
+# test_data = test_data[extractedFeatures]
+# reg = joblib.load("../model/RandomForestRegressor.pkl")
+# factor = 0.943
+# for i in range(10):
+#     print(factor)
+#     test_data, a = preprocessMM(test_data, a)
+#     Y_pred = reg.predict(test_data) * factor
+#
+#     submission = {
+#         "Id": store_ids,
+#         "Sales": Y_pred
+#     }
+#
+#     # submission = Series(Y_pred, index=store_ids)
+#     submission = pandas.DataFrame(submission)
+#     submission.to_csv('submission%f.csv' % factor, index=False)
+#     factor += 0.0001
+
+
+
+#
+# extractedFeatures.remove("Sales")
+# print(extractedFeatures)
+# test_data = test_data.sort_values("Month")
+# store_ids = test_data["Id"]
+# test_data = test_data[extractedFeatures]
+# test_data, a = preprocessMM(test_data, a)
+# # reg = joblib.load("../model/RandomForestRegressor.pkl")
+#
+# a = 0
+# Y_pred = optimizationRFPerMonthSubmission(valid, test_data)
+#
+# submission = {
+#     "Id": store_ids,
+#     "Sales": Y_pred
+# }
+#
+# # submission = Series(Y_pred, index=store_ids)
+# submission = pandas.DataFrame(submission)
+# submission.to_csv('submission.csv', index=False)

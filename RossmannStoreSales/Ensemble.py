@@ -9,13 +9,13 @@ from RossmannStoreSales.Compare import compareResultMM, compareResultPure
 from RossmannStoreSales.Preprocess import preprocessMM, preprocess
 
 
-def randomForest(x_train, y_train,n):
+def randomForest(x_train, y_train, n):
     x_train, y_train = preprocess(x_train, y_train)
-    reg = RandomForestRegressor()
+    reg = RandomForestRegressor(n_jobs=-1)
     t5 = time.time()
     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(n))
     t6 = time.time()
-    print("randomForest: ",n)
+    print("randomForest: ", n)
     print("10-folder cross validation score: ", score)
     print("mean score: ", np.mean(score))
     print("time: ", t6 - t5)
@@ -23,7 +23,7 @@ def randomForest(x_train, y_train,n):
 
 def generateRandomForest(x_train, y_train, x_valid, y_valid):
     x_train, y_train = preprocessMM(x_train, y_train)
-    reg = RandomForestRegressor()
+    reg = RandomForestRegressor(n_jobs=-1, min_samples_leaf=1, n_estimators=180)
     reg.fit(x_train, y_train)
     compareResultMM(reg, x_valid, y_valid, "RandomForestRegressor")
     joblib.dump(reg, '../model/RandomForestRegressor.pkl')
@@ -66,38 +66,27 @@ def generateGradientBoosting(x_train, y_train, x_valid, y_valid):
     joblib.dump(reg, '../model/GradientBoostingRegressor.pkl')
 
 
+def randomForestPerStore(train, valid):
+    rossmann_dic = dict(list(train.groupby('Store')))
+    valid_dic = dict(list(valid.groupby('Store')))
+    errors = []
+    for i in rossmann_dic:
+        store = rossmann_dic[i]
+        valid_store = valid_dic[i]
+        # define training and testing sets
+        x_train = store.drop(["Sales", "Store"], axis=1)
+        y_train = store["Sales"]
+        x_valid = valid_store.drop(["Sales", "Store"], axis=1)
+        y_valid = valid_store["Sales"]
 
-
-
-
-
-
-
-
-
-
-#
-# def randomForestPerStore(train, valid):
-#     rossmann_dic = dict(list(train.groupby('Store')))
-#     valid_dic = dict(list(valid.groupby('Store')))
-#     errors = []
-#     for i in rossmann_dic:
-#         store = rossmann_dic[i]
-#         valid_store = valid_dic[i]
-#         # define training and testing sets
-#         x_train = store.drop(["Sales", "Store"], axis=1)
-#         y_train = store["Sales"]
-#         x_valid = valid_store.drop(["Sales", "Store"], axis=1)
-#         y_valid = valid_store["Sales"]
-#
-#         # Linear Regression
-#         reg = RandomForestRegressor()
-#         reg.fit(x_train, y_train)
-#         y_hat = reg.predict(x_valid)
-#         error = LossFuction.basicRmspe(y_valid, y_hat)
-#         # print(y_hat)
-#         # print(y_valid)
-#         # print()
-#         errors.append(error)
-#         # print(error)
-#     print(np.mean(errors))
+        # Linear Regression
+        reg = RandomForestRegressor()
+        reg.fit(x_train, y_train)
+        y_hat = reg.predict(x_valid)
+        error = LossFuction.basicRmspe(y_valid, y_hat)
+        # print(y_hat)
+        # print(y_valid)
+        # print()
+        errors.append(error)
+        # print(error)
+    print(np.mean(errors))

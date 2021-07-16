@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
+pd.set_option("display.max_columns", 1000)
+pd.set_option("display.max_rows", 1000)
 
 def open_csv(csv_name):
     with open("../input/{}".format(csv_name)) as f:
@@ -260,6 +261,7 @@ data_train = data_train.drop('Customers', axis=1)
 data_test.StateHoliday = data_test.StateHoliday.map({'0': '无', 0: '无', 'a': '公共假日', 'b': '复活节假期', 'c': '圣诞节'})
 # 连接test表和train表
 data_train_test = pd.concat([data_train, data_test.drop('Id', axis=1)], axis=0, ignore_index=True)
+
 data_train_test.sample(5)
 
 # 连接store表和train_test表
@@ -424,6 +426,7 @@ from sklearn.model_selection import cross_val_score, StratifiedKFold, train_test
 data_x = data_train_test_final.iloc[:, :-1]
 data_y = data_train_test_final.iloc[:, -1:]
 train_x, test_x, train_y, test_y = train_test_split(data_x, data_y, test_size=0.2)
+
 print(train_x.shape)
 print(train_y.shape)
 print(test_x.shape)
@@ -436,7 +439,7 @@ gbdt_model = GradientBoostingRegressor()
 rfr_model = RandomForestRegressor()
 # models = [lr_model, tree_model, rfr_model, gbdt_model]
 # model_names = ['lr_model', 'tree_model', 'rfr_model', 'gbdt_model']
-models = [rfr_model]
+models = [tree_model]
 model_names = ['rfr_model']
 scores = []
 for model, model_name in zip(models, model_names):

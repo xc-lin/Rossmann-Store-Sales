@@ -22,7 +22,7 @@ from RossmannStoreSales.Preprocess import preprocess, preprocessMM
 
 
 def decisionTree(x_train, y_train):
-    x_train, y_train = preprocessMM(x_train, y_train)
+    x_train, y_train = preprocess(x_train, y_train)
     reg = DecisionTreeRegressor()
     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
     # reg.fit(x_train, y_train)
