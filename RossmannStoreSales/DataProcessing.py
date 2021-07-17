@@ -13,48 +13,37 @@ pandas.set_option("display.max_rows", 1000)
 store_data = pandas.read_csv("../input/store.csv")
 train_data = pandas.read_csv("../input/train.csv")
 test_data = pandas.read_csv("../input/test.csv")
-
-print("------train_data------")
+print("-" * 20, "train_data", "-" * 20)
 print(train_data.info())
-print(train_data.head())
 print()
 
-print("------store_data------")
+print("-" * 20, "store_data", "-" * 20)
 print(store_data.info())
-print(store_data.head())
 print(store_data.isnull().sum())
 print()
-# store_data[store_data["PromoInterval"].isnull()] = ""
 
-# store_data["CompetitionDistance"] = store_data["CompetitionDistance"].fillna(
-#     store_data["CompetitionDistance"].mean())
-# columns = ['CompetitionDistance', 'CompetitionOpenSinceMonth', 'CompetitionOpenSinceYear',
-#            'Promo2SinceWeek', 'Promo2SinceYear']
-# for i in columns:
-#     store_data[i] = store_data[i].fillna(store_data[i].mode()[0])  # mode返回series，不是一个数
-# print(store_data.info())
-store_data.fillna(0, inplace=True)
-store_data["PromoInterval"] = store_data["PromoInterval"].apply(lambda x: "" if x == 0 else x)
-print(store_data.info())
-print("------test_data-------")
+print("-" * 20, "test_data", "-" * 20)
 print(test_data.info())
-print(test_data.head())
 print(test_data[test_data.isnull().T.any()])
 print("-" * 100)
+
+store_data.fillna(0, inplace=True)
+store_data["PromoInterval"] = store_data["PromoInterval"].apply(lambda x: "" if x == 0 else x)
+
 # the data in train data of store 622 is open except 7
 # print(train_data.loc[train_data["Store"] == 622][["DayOfWeek", "Open"]])
 null_data = test_data.isnull().T.any()
+
 # set
-test_data["Open"][null_data] = (test_data["DayOfWeek"][null_data] != 7).astype(int)
-#
+test_data["Open"][null_data] = test_data["DayOfWeek"][null_data].apply(lambda x: 1 if x != 7 else 0)
 
 train_data = pandas.merge(train_data, store_data, on="Store")
 test_data = pandas.merge(test_data, store_data, on="Store")
-# 添加
-train_data = train_data.loc[~((train_data['Open'] == 1) & (train_data['Sales'] == 0))]
-# so that we can compute the corr easily
-def dataProcess(data):
 
+train_data = train_data.loc[~((train_data['Open'] == 1) & (train_data['Sales'] == 0))]
+
+def dataProcess(data):
+    #  Convert date to year, month, and day
     data["Year"] = data["Date"].apply(lambda x: int(x.split("-")[0]))
     monthNumToWord = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", \
                       7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"}
@@ -62,11 +51,13 @@ def dataProcess(data):
 
     data["Month"] = data["Month"].map(monthNumToWord)
     data["Day"] = data["Date"].apply(lambda x: int(x.split("-")[2]))
+    #  Convert PromoInterval to whether this month is in the promotion date
     data["IsInPromo"] = data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
+    #  Convert the Month to int
     data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
-    # 添加
+    # add the feature of Week of year and day of year
     data["Date"] = pandas.to_datetime(data["Date"])
-    data["Week"] = data["Date"].dt.week
+    data["WeekOfYear"] = data["Date"].dt.week
     data["DayOfYear"] = data["Date"].dt.dayofyear
     #
     # print(train_data.head())
@@ -77,19 +68,17 @@ def dataProcess(data):
     data["StateHoliday"] = data["StateHoliday"].apply(lambda x: "0" if x == 0 else x)
     data["StateHoliday"] = data["StateHoliday"].map(letterToNum).astype(int)
     data["Store"] = data["Store"].astype(int)
-    # train_data["CompetitionDistance"] = train_data["CompetitionDistance"].astype(int)
     data["Promo2"] = data["Promo2"].astype(int)
     data["Promo2SinceWeek"] = data["Promo2SinceWeek"].astype(int)
     data["Promo2SinceYear"] = data["Promo2SinceYear"].astype(int)
     data["CompetitionOpenSinceMonth"] = data["CompetitionOpenSinceMonth"].astype(int)
     data["CompetitionOpenSinceYear"] = data["CompetitionOpenSinceYear"].astype(int)
+    data["Open"] = data["Open"].astype(int)
 
 
 dataProcess(train_data)
 dataProcess(test_data)
-# train_data = train_data.drop("Promo2SinceWeek", axis=1)
-# train_data = train_data.drop("Promo2", axis=1)
-# train_data = train_data.drop("Promo2SinceYear", axis=1)
+
 '''
 plt.subplots(figsize=(30, 25))
 sns.heatmap(train_data.corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.1, center=0)
@@ -210,8 +199,8 @@ plt.show()
 
 '''
 
-extractedFeatures = ["Store","Week","DayOfYear","DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType", "Assortment",
-                     "CompetitionDistance", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", "Promo2",
+extractedFeatures = ["Store", "WeekOfYear","DayOfYear","DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType",
+                     "Assortment","CompetitionDistance", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", "Promo2",
                      "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek", "Promo2SinceYear"]
 
 # train_data=train_data[train_data["Sales"]>0]

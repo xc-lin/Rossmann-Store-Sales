@@ -1,6 +1,6 @@
 import numpy as np
-from matplotlib import pyplot as plt
 import xgboost as xgb
+from matplotlib import pyplot as plt
 from xgboost import plot_importance
 
 from RossmannStoreSales.Preprocess import preprocessMM
@@ -29,7 +29,7 @@ def rmspe_xg(yhat, y):
     return "rmspe", rmspe
 
 
-def xgboost(x_train, y_train, x_valid, y_valid, test_data,extractedFeatures):
+def xgboost(x_train, y_train, x_valid, y_valid, test_data, extractedFeatures):
     # x_train, y_train = preprocessMM(x_train, y_train)
     # x_valid, y_valid = preprocessMM(x_valid, y_valid)
 
@@ -62,7 +62,7 @@ def xgboost(x_train, y_train, x_valid, y_valid, test_data,extractedFeatures):
 
     plot_importance(model)
     plt.show()
-    a=0
+    a = 0
     # test_data, a = preprocessMM(test_data, a)
     submit = test_data
     dsubmit = xgb.DMatrix(submit[extractedFeatures])
