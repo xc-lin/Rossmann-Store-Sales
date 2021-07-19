@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 
 from RossmannStoreSales import LossFuction
 from RossmannStoreSales.Compare import compareResult
-from RossmannStoreSales.Preprocess import preprocess
+from RossmannStoreSales.Preprocess import preprocess, preprocessMM
 
 
 def linearRegression(x_train, y_train):
@@ -17,10 +17,6 @@ def linearRegression(x_train, y_train):
     print("linearRegression:")
     print("10-folder cross validation score: ", score)
     print("mean score: ", np.mean(score))
-    # y_hat = reg.predict(x_valid)
-    # print(reg.score(x_train, y_train))
-    # error = LossFuction.basicRmspe(y_valid, y_hat)
-    # print(error)
 
 
 def generateLinearRegression(x_train, y_train, x_valid, y_valid):
@@ -34,8 +30,8 @@ def generateLinearRegression(x_train, y_train, x_valid, y_valid):
 def sgdRegression(x_train, y_train):
     x_train, y_train = preprocess(x_train, y_train)
     reg = linear_model.SGDRegressor()
-    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
-    print("sgdRegression:")
+    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(2))
+    print("LogisticRegression:")
     print("10-folder cross validation score: ", score)
     print("mean score: ", np.mean(score))
 

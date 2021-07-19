@@ -1,11 +1,35 @@
-import joblib
+import numpy as np
 import pandas
 from matplotlib import pyplot as plt
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
+from xgboost import plot_importance
+import xgboost as xgb
 
-from RossmannStoreSales import Ensemble, LinearRegressionModel
-from RossmannStoreSales.Preprocess import preprocessMM
-from RossmannStoreSales.Xgboost import xgboost
+from RossmannStoreSales import LinearRegressionModel, Tree, Ensemble
+
+
+def handleZero(y):
+    w = np.zeros(y.shape, dtype=float)
+    ind = y != 0
+    w[ind] = 1. / (y[ind] ** 2)
+    return w
+
+
+def basicRmspe(y, y_hat):
+    one_over_y = handleZero(y)
+    s1 = one_over_y * (y - y_hat) ** 2
+    s2 = np.mean(s1)
+    result = np.sqrt(s2)
+    return result
+
+
+def rmspe(y_hat, y):
+    y = y.get_label()
+    y = np.exp(y) - 1
+    y_hat = np.exp(y_hat) - 1
+    result = basicRmspe(y, y_hat)
+    return "rmspe", result
+
 
 a = 0
 pandas.set_option("display.max_columns", 1000)
@@ -39,8 +63,9 @@ test_data["Open"][null_data] = test_data["DayOfWeek"][null_data].apply(lambda x:
 
 train_data = pandas.merge(train_data, store_data, on="Store")
 test_data = pandas.merge(test_data, store_data, on="Store")
-
+# train_data=train_data[train_data["Sales"]>0]
 train_data = train_data.loc[~((train_data['Open'] == 1) & (train_data['Sales'] == 0))]
+
 
 def dataProcess(data):
     #  Convert date to year, month, and day
@@ -53,6 +78,7 @@ def dataProcess(data):
     data["Day"] = data["Date"].apply(lambda x: int(x.split("-")[2]))
     #  Convert PromoInterval to whether this month is in the promotion date
     data["IsInPromo"] = data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
+
     #  Convert the Month to int
     data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
     # add the feature of Week of year and day of year
@@ -137,7 +163,19 @@ plt.plot(competitionDistance_Sales["CompetitionDistance"], competitionDistance_S
 plt.xlabel("CompetitionDistance")
 plt.ylabel("Sales")
 plt.show()
+'''
+competitionOpenSinceMonth_Sales = \
+    train_data[train_data["CompetitionOpenSinceMonth"] != 0].groupby("CompetitionOpenSinceMonth", as_index=False)[
+        ["Sales"]].mean()
+plt.plot(competitionOpenSinceMonth_Sales["CompetitionOpenSinceMonth"], competitionOpenSinceMonth_Sales["Sales"], "-")
+plt.xlabel("CompetitionOpenSinceMonth")
+plt.ylabel("Sales")
+plt.show()
 
+
+
+
+'''
 open_Sales = train_data.groupby("Open", as_index=False)[["Sales"]].mean()
 sns.barplot(data=open_Sales, x="Open", y="Sales")
 plt.xlabel("Open")
@@ -198,29 +236,32 @@ sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
 plt.show()
 
 '''
+#
+extractedFeatures = ["Store", "WeekOfYear", "DayOfYear","DayOfWeek", "Promo", "IsInPromo", "StateHoliday", "SchoolHoliday", "Open",
+                     "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
+                     "CompetitionOpenSinceYear",
+                     "Promo2", "Year", "Month", "Day", "Promo2SinceWeek", "Promo2SinceYear",
+                     "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", ]
 
-extractedFeatures = ["Store", "WeekOfYear","DayOfYear","DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday", "StoreType",
-                     "Assortment","CompetitionDistance", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", "Promo2",
-                     "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek", "Promo2SinceYear"]
-
-# train_data=train_data[train_data["Sales"]>0]
 x_train = train_data[extractedFeatures]
 y_train = train_data["Sales"]
 
-features = extractedFeatures
+features = extractedFeatures.copy()
 features.append("Sales")
 train = train_data[features]
 train, valid = train_test_split(train, test_size=0.1, random_state=42)
 
 y_train_v = train[["Sales"]]
 x_train_v = train.drop("Sales", axis=1)
-# valid = valid[valid["Sales"] > 0]
 y_valid = valid[["Sales"]]
 x_valid = valid.drop("Sales", axis=1)
 
 # LinearRegressionModel.linearRegression(x_train, y_train)
+
+
 #
 # LinearRegressionModel.sgdRegression(x_train, y_train)
+
 #
 # alphas = []
 # alpha = 0
@@ -261,11 +302,9 @@ x_valid = valid.drop("Sales", axis=1)
 
 
 # Tree.decisionTree(x_train_v, y_train_v)
-# for i in range(2, 10):
-#     Ensemble.randomForest(x_train, y_train, i)
 # Ensemble.randomForest(x_train_v, y_train_v, 10)
 # Ensemble.extraTrees(x_train, y_train)
-#
+# #
 # Ensemble.gradientBoosting(x_train, y_train)
 
 #
@@ -343,9 +382,48 @@ x_valid = valid.drop("Sales", axis=1)
 # submission = pandas.DataFrame(submission)
 # submission.to_csv('submission.csv', index=False)
 
-
-extractedFeatures.remove("Sales")
+# Xgboost
 print(extractedFeatures)
 
+y_train_v = np.log(1 + y_train_v)
+y_valid = np.log(1 + y_valid)
 
-xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data,extractedFeatures)
+dtrain = xgb.DMatrix(x_train_v, y_train_v)
+dvalid = xgb.DMatrix(x_valid, y_valid)
+print()
+num_round = 7000
+evallist = [(dtrain, 'train'), (dvalid, 'valid')]
+
+param = {'max_depth': 9,
+         'eta': 0.06,
+         'subsample': 0.75,
+         'colsample_bytree': 0.6,
+         'objective': 'reg:squarederror', }
+
+plst = list(param.items())
+print(123)
+model = xgb.train(plst, dtrain, num_round, evallist,
+                  feval=rmspe, verbose_eval=1, early_stopping_rounds=2)
+
+score = cross_val_score(model, x_train, y_train, cv=StratifiedKFold(2))
+print("LogisticRegression:")
+print("10-folder cross validation score: ", score)
+print("mean score: ", np.mean(score))
+print(123)
+# Print Feature Importance
+plt.figure(figsize=(18, 8))
+
+plot_importance(model)
+plt.show()
+a = 0
+
+submit = test_data
+dsubmit = xgb.DMatrix(submit[extractedFeatures])
+predictions = model.predict(dsubmit)
+
+df_predictions = submit['Id'].reset_index()
+df_predictions['Id'] = df_predictions['Id'].astype('int')
+df_predictions['Sales'] = (np.exp(predictions) - 1) * 0.985  # Scale Back
+
+df_predictions.sort_values('Id', inplace=True)
+df_predictions[['Id', 'Sales']].to_csv('solution.csv', index=False)

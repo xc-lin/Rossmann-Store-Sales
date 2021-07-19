@@ -3,44 +3,42 @@ import xgboost as xgb
 from matplotlib import pyplot as plt
 from xgboost import plot_importance
 
-from RossmannStoreSales.Preprocess import preprocessMM
+
+# # Thanks for providing this in the forum
+# def ToWeight(y):
+#     w = np.zeros(y.shape, dtype=float)
+#     ind = y != 0
+#     w[ind] = 1. / (y[ind] ** 2)
+#     return w
+#
+#
+# def rmspe(yhat, y):
+#     w = ToWeight(y)
+#     rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
+#     return rmspe
+#
+#
+# def rmspe_xg(yhat, y):
+#     y = y.get_label()
+#     y = np.exp(y) - 1
+#     yhat = np.exp(yhat) - 1
+#     w = ToWeight(y)
+#     rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
+#     return "rmspe", rmspe
 
 
-# Thanks for providing this in the forum
-def ToWeight(y):
-    w = np.zeros(y.shape, dtype=float)
-    ind = y != 0
-    w[ind] = 1. / (y[ind] ** 2)
-    return w
-
-
-def rmspe(yhat, y):
-    w = ToWeight(y)
-    rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
-    return rmspe
-
-
-def rmspe_xg(yhat, y):
-    y = y.get_label()
-    y = np.exp(y) - 1
-    yhat = np.exp(yhat) - 1
-    w = ToWeight(y)
-    rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
-    return "rmspe", rmspe
-
-
-def xgboost(x_train, y_train, x_valid, y_valid, test_data, extractedFeatures):
+def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data, extractedFeatures):
     # x_train, y_train = preprocessMM(x_train, y_train)
     # x_valid, y_valid = preprocessMM(x_valid, y_valid)
 
-    y_train = np.log(1 + y_train)
+    y_train_v = np.log(1 + y_train_v)
     y_valid = np.log(1 + y_valid)
 
-    print(x_train.info())
-    print(y_train.info())
+    print(x_train_v.info())
+    print(y_train_v.info())
     print(x_valid.info())
     print(y_valid.info())
-    dtrain = xgb.DMatrix(x_train, y_train)
+    dtrain = xgb.DMatrix(x_train_v, y_train_v)
     dvalid = xgb.DMatrix(x_valid, y_valid)
     print()
     num_round = 7000
@@ -55,7 +53,7 @@ def xgboost(x_train, y_train, x_valid, y_valid, test_data, extractedFeatures):
     plst = list(param.items())
     print(123)
     model = xgb.train(plst, dtrain, num_round, evallist,
-                      feval=rmspe_xg, verbose_eval=1, early_stopping_rounds=100)
+                      feval=rmspe, verbose_eval=1, early_stopping_rounds=100)
     print(123)
     # Print Feature Importance
     plt.figure(figsize=(18, 8))
