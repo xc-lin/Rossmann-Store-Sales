@@ -7,6 +7,7 @@ import Model
 from GeneratePlot import generatePlot
 import warnings
 
+
 # warnings.filterwarnings("ignore")
 
 
@@ -90,11 +91,11 @@ def extractFeatures(train_data, test_data):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plot', action='store_true', default=False, help="True, generate plots")
-    parser.add_argument('--model', type=str, default="xgboost", help="linear, decisionTree, extraTrees, "
-                                                                     "gradientBoosting, randomForest, xgboost")
-    parser.add_argument('--predict', type=bool, default=False,
-                        help='True or False, Whether to predict the test data and generate submission.csv')
+    parser.add_argument('--plot', action='store_true', default=False, help="to generate some plots to analyse data")
+    parser.add_argument('--model', type=str, default="xgboost", help="linear or decisionTree or extraTrees, "
+                                                                     "gradientBoosting or randomForest or xgboost")
+    parser.add_argument('--predict', action='store_true', default=False,
+                        help='predict the test data and generate submission.csv by generated xgboost model directly')
     parser.add_argument('--nfolds', type=int, default="10", help="Number of folds. Must be at least 2 default:10")
 
     args = parser.parse_args()
@@ -130,8 +131,11 @@ def main():
         print("-" * 20, "plotsGenerating finished", "-" * 20)
 
     x_train_v, y_train_v, x_valid, y_valid, test_data = extractFeatures(train_data, test_data)
-
-    if args.model == "linear":
+    if args.predict:
+        print("-" * 20, "Starting generating submission.csv and plots of predict data of xgboost...", "-" * 20)
+        Model.xgboostPredict(x_valid, y_valid, test_data)
+        print("-" * 20, "generation is finished", "-" * 20)
+    elif args.model == "linear":
         print("-" * 20, "Starting testing LinearRegression...", "-" * 20)
         Model.linearRegression(x_train_v, y_train_v, x_valid, y_valid, nfolds)
         print("-" * 20, "LinearRegression test is finished", "-" * 20)
@@ -164,7 +168,6 @@ def main():
         print("-" * 20, "Starting testing xgboost...", "-" * 20)
         Model.xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data)
         print("-" * 20, "xgboost test is finished", "-" * 20)
-
 
 
 if __name__ == '__main__':
