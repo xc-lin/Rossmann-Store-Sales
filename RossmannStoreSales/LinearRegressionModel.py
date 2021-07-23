@@ -50,7 +50,7 @@ def linearRegression(x_train_v, y_train_v, x_valid, y_valid, nfolds):
 
 
 def ridgeRegression(x_train, y_train, alpha):
-    x_train, y_train = preprocess(x_train, y_train)
+    x_train = preprocess(x_train)
     reg = linear_model.Ridge(alpha=alpha)
     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
     # reg.fit(x_train, y_train)

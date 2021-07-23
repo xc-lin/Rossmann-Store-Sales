@@ -42,7 +42,7 @@ def dataProcess(data):
     data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
     # add the feature of Week of year and day of year
     data["Date"] = pandas.to_datetime(data["Date"])
-    data["WeekOfYear"] = data["Date"].dt.week
+    data["WeekOfYear"] = data["Date"].dt.isocalendar().week.astype(int)
     data["DayOfYear"] = data["Date"].dt.dayofyear
     #
     # print(train_data.head())
@@ -92,7 +92,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--plot', action='store_true', default=False, help="True, generate plots")
     parser.add_argument('--model', type=str, default="xgboost", help="linear, decisionTree, extraTrees, "
-                                                                     "gradientBoosting, xgboost")
+                                                                     "gradientBoosting, randomForest, xgboost")
     parser.add_argument('--predict', type=bool, default=False,
                         help='True or False, Whether to predict the test data and generate submission.csv')
     parser.add_argument('--nfolds', type=int, default="10", help="Number of folds. Must be at least 2 default:10")
@@ -135,6 +135,11 @@ def main():
         print("-" * 20, "Starting testing LinearRegression...", "-" * 20)
         Model.linearRegression(x_train_v, y_train_v, x_valid, y_valid, nfolds)
         print("-" * 20, "LinearRegression test is finished", "-" * 20)
+    # elif args.model == "ridge":
+    #     print("-" * 20, "Starting testing ExtraTrees...", "-" * 20)
+    #     Model.ridge(x_train_v, y_train_v, x_valid, y_valid, nfolds)
+    #     print("-" * 20, "ExtraTrees test is finished", "-" * 20)
+
     elif args.model == "decisionTree":
         print("-" * 20, "Starting testing DecisionTree...", "-" * 20)
         Model.decisionTree(x_train_v, y_train_v, x_valid, y_valid, nfolds)
@@ -148,6 +153,11 @@ def main():
     elif args.model == "gradientBoosting":
         print("-" * 20, "Starting testing GradientBoosting...", "-" * 20)
         Model.gradientBoosting(x_train_v, y_train_v, x_valid, y_valid, nfolds)
+        print("-" * 20, "GradientBoosting test is finished", "-" * 20)
+
+    elif args.model == "randomForest":
+        print("-" * 20, "Starting testing GradientBoosting...", "-" * 20)
+        Model.randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds)
         print("-" * 20, "GradientBoosting test is finished", "-" * 20)
 
     elif args.model == "xgboost":
