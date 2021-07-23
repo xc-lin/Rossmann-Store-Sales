@@ -7,8 +7,8 @@ import pandas
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 
-from RossmannStoreSales import LossFuction
-from RossmannStoreSales.Preprocess import preprocess, preprocessMM
+from final import LossFuction
+from RossmannStoreSales.Preprocess import preprocessMM
 
 
 def optimization(x_train, y_train, model):

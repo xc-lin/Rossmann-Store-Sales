@@ -5,7 +5,7 @@ import seaborn as sns
 def generatePlot(train_data):
     plt.subplots(figsize=(30, 25))
     sns.heatmap(train_data.corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.1, center=0)
-    sns.pairplot(train_data[0:100])
+    sns.pairplot(train_data[0:1000])
 
     store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
     sns.boxplot(store_sales["Sales"])

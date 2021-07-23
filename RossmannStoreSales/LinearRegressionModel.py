@@ -1,47 +1,52 @@
 import joblib
 import numpy as np
+from matplotlib import pyplot as plt
 from sklearn import linear_model
 from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.preprocessing import StandardScaler
 
-from RossmannStoreSales import LossFuction
 from RossmannStoreSales.Compare import compareResult
-from RossmannStoreSales.Preprocess import preprocess, preprocessMM
+from RossmannStoreSales.Preprocess import preprocess
 
 
-def linearRegression(x_train, y_train):
-    x_train, y_train = preprocess(x_train, y_train)
+def linearRegression(x_train_v, y_train_v, x_valid, y_valid, nfolds):
+    x_train_v = preprocess(x_train_v)
     reg = linear_model.LinearRegression()
-    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
-    # reg.fit(x_train, y_train)
+    score = cross_val_score(reg, x_train_v, y_train_v, cv=StratifiedKFold(nfolds))
+    x_valid, y_valid = preprocess(x_valid, y_valid)
+    y_hat = reg.predict(x_valid)
+    plt.title("linearRegression")
+    plt.plot(y_hat[::200])
+    plt.plot(y_valid.iloc[::200].values)
+    plt.legend(["y_hat (linearRegression)", "real"])
+    plt.show()
     print("linearRegression:")
     print("10-folder cross validation score: ", score)
     print("mean score: ", np.mean(score))
 
 
-def generateLinearRegression(x_train, y_train, x_valid, y_valid):
-    x_train, y_train = preprocess(x_train, y_train)
-    reg = linear_model.LinearRegression()
-    reg.fit(x_train, y_train)
-    compareResult(reg, x_valid, y_valid, "LinearRegression")
-    joblib.dump(reg, '../model/LinearRegression.pkl')
+# def generateLinearRegression(x_train, y_train, x_valid, y_valid):
+#     x_train, y_train = preprocess(x_train, y_train)
+#     reg = linear_model.LinearRegression()
+#     reg.fit(x_train, y_train)
+#     compareResult(reg, x_valid, y_valid, "LinearRegression")
+#     joblib.dump(reg, '../model/LinearRegression.pkl')
 
 
-def sgdRegression(x_train, y_train):
-    x_train, y_train = preprocess(x_train, y_train)
-    reg = linear_model.SGDRegressor()
-    score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(2))
-    print("LogisticRegression:")
-    print("10-folder cross validation score: ", score)
-    print("mean score: ", np.mean(score))
-
-
-def generateSGDRegression(x_train, y_train, x_valid, y_valid):
-    x_train, y_train = preprocess(x_train, y_train)
-    reg = linear_model.SGDRegressor()
-    reg.fit(x_train, y_train)
-    compareResult(reg, x_valid, y_valid, "SGDRegressor")
-    joblib.dump(reg, '../model/SGDRegressor.pkl')
+# def sgdRegression(x_train, y_train):
+#     x_train, y_train = preprocess(x_train, y_train)
+#     reg = linear_model.SGDRegressor()
+#     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(2))
+#     print("LogisticRegression:")
+#     print("10-folder cross validation score: ", score)
+#     print("mean score: ", np.mean(score))
+#
+#
+# def generateSGDRegression(x_train, y_train, x_valid, y_valid):
+#     x_train, y_train = preprocess(x_train, y_train)
+#     reg = linear_model.SGDRegressor()
+#     reg.fit(x_train, y_train)
+#     compareResult(reg, x_valid, y_valid, "SGDRegressor")
+#     joblib.dump(reg, '../model/SGDRegressor.pkl')
 
 
 def ridgeRegression(x_train, y_train, alpha):

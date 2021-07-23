@@ -1,9 +1,7 @@
 import numpy as np
 import Xgboost as xgb
-from matplotlib import pyplot as plt
-from sklearn.model_selection import StratifiedKFold
 
-from RossmannStoreSales import LossFuction
+from final import LossFuction
 
 
 def xgboostModel(x_train, y_train):
@@ -31,5 +29,5 @@ def xgboostModel(x_train, y_train):
     # print(np.expm1(y_hat))
     # print(y_valid.values)
     res = xgb.cv(params, xgb_train, num_boost_round, \
-                 early_stopping_rounds=100, feval=LossFuction.rmspe, verbose_eval=5, nfold=10,metrics='auc')
+                 early_stopping_rounds=100, feval=LossFuction.rmspe, verbose_eval=5, nfold=10, metrics='auc')
     print(res)

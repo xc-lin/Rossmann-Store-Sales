@@ -1,8 +1,13 @@
 import argparse
 
 import pandas
+from sklearn.model_selection import train_test_split
 
-from RossmannStoreSales.GeneratePlot import generatePlot
+import Model
+from GeneratePlot import generatePlot
+import warnings
+
+# warnings.filterwarnings("ignore")
 
 
 def handleMissingValue(train_data, store_data, test_data):
@@ -25,7 +30,7 @@ def handleMissingValue(train_data, store_data, test_data):
 def dataProcess(data):
     #  Convert date to year, month, and day
     data["Year"] = data["Date"].apply(lambda x: int(x.split("-")[0]))
-    monthNumToWord = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", \
+    monthNumToWord = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
                       7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"}
     data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
 
@@ -37,8 +42,8 @@ def dataProcess(data):
     data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
     # add the feature of Week of year and day of year
     data["Date"] = pandas.to_datetime(data["Date"])
-    data["WeekOfYear"] = data["Date"].dt.isocalendar().week
-    data["DayOfYear"] = data["Date"].dt.isocalendar().year
+    data["WeekOfYear"] = data["Date"].dt.week
+    data["DayOfYear"] = data["Date"].dt.dayofyear
     #
     # print(train_data.head())
     letterToNum = {"0": 0, "a": 1, "b": 2, "c": 3, "d": 4}
@@ -56,20 +61,49 @@ def dataProcess(data):
     data["Open"] = data["Open"].astype(int)
 
 
+def extractFeatures(train_data, test_data):
+    extractedFeatures = ["Store", "DayOfYear","WeekOfYear","DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
+                         "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
+                         "CompetitionOpenSinceYear", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open",
+                         "Promo2SinceWeek", "Promo2SinceYear"]
+
+    # train_data=train_data[train_data["Sales"]>0]
+    # x_train = train_data[extractedFeatures]
+    # y_train = train_data["Sales"]
+
+    features = extractedFeatures.copy()
+    features.append("Sales")
+    train = train_data[features]
+    train, valid = train_test_split(train, test_size=0.1, random_state=42)
+    # valid, test = train_test_split(valid, test_size=0.3, random_state=15)
+
+    y_train_v = train[["Sales"]]
+    x_train_v = train.drop("Sales", axis=1)
+
+    y_valid = valid[["Sales"]]
+    x_valid = valid.drop("Sales", axis=1)
+    test_features = extractedFeatures.copy()
+    test_features.append("Id")
+    test_data = test_data[test_features]
+    return x_train_v, y_train_v, x_valid, y_valid, test_data
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plot', type=bool, default=False, help="True or False, Whether to generate plots")
+    parser.add_argument('--plot', action='store_true', default=False, help="True, generate plots")
     parser.add_argument('--model', type=str, default="xgboost", help="linear, decisionTree, extraTrees, "
                                                                      "gradientBoosting, xgboost")
     parser.add_argument('--predict', type=bool, default=False,
                         help='True or False, Whether to predict the test data and generate submission.csv')
-    args = parser.parse_args()
+    parser.add_argument('--nfolds', type=int, default="10", help="Number of folds. Must be at least 2 default:10")
 
+    args = parser.parse_args()
+    nfolds = args.nfolds
     pandas.set_option("display.max_columns", 1000)
     pandas.set_option("display.max_rows", 1000)
-    store_data = pandas.read_csv("input/store.csv")
-    train_data = pandas.read_csv("input/train.csv")
-    test_data = pandas.read_csv("input/test.csv")
+    store_data = pandas.read_csv("../input/store.csv")
+    train_data = pandas.read_csv("../input/train.csv")
+    test_data = pandas.read_csv("../input/test.csv")
     print("-" * 20, "train_data", "-" * 20)
     print(train_data.info())
     print()
@@ -82,14 +116,45 @@ def main():
     print(test_data[test_data.isnull().T.any()])
     print("-" * 100)
 
-    print("-" * 20, "Start process data", "-" * 20)
+    print("-" * 20, "Start processing data...", "-" * 20)
     train_data, test_data = handleMissingValue(train_data, store_data, test_data)
-
+    print("processing train data...")
     dataProcess(train_data)
+    print("processing test data...")
     dataProcess(test_data)
     print("-" * 20, "data process finished", "-" * 20)
+
     if args.plot:
-        (train_data)
+        print("-" * 20, "Start generating plots...", "-" * 20)
+        generatePlot(train_data)
+        print("-" * 20, "plotsGenerating finished", "-" * 20)
+
+    x_train_v, y_train_v, x_valid, y_valid, test_data = extractFeatures(train_data, test_data)
+
+    if args.model == "linear":
+        print("-" * 20, "Starting testing LinearRegression...", "-" * 20)
+        Model.linearRegression(x_train_v, y_train_v, x_valid, y_valid, nfolds)
+        print("-" * 20, "LinearRegression test is finished", "-" * 20)
+    elif args.model == "decisionTree":
+        print("-" * 20, "Starting testing DecisionTree...", "-" * 20)
+        Model.decisionTree(x_train_v, y_train_v, x_valid, y_valid, nfolds)
+        print("-" * 20, "DecisionTree test is finished", "-" * 20)
+
+    elif args.model == "extraTrees":
+        print("-" * 20, "Starting testing ExtraTrees...", "-" * 20)
+        Model.extraTrees(x_train_v, y_train_v, x_valid, y_valid, nfolds)
+        print("-" * 20, "ExtraTrees test is finished", "-" * 20)
+
+    elif args.model == "gradientBoosting":
+        print("-" * 20, "Starting testing GradientBoosting...", "-" * 20)
+        Model.gradientBoosting(x_train_v, y_train_v, x_valid, y_valid, nfolds)
+        print("-" * 20, "GradientBoosting test is finished", "-" * 20)
+
+    elif args.model == "xgboost":
+        print("-" * 20, "Starting testing xgboost...", "-" * 20)
+        Model.xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data)
+        print("-" * 20, "xgboost test is finished", "-" * 20)
+
 
 
 if __name__ == '__main__':

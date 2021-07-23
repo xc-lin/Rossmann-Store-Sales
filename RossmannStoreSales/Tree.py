@@ -1,15 +1,7 @@
-import time
-
 import joblib
 import numpy as np
-import pandas
-import sklearn
 from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from RossmannStoreSales import LossFuction
+from sklearn.tree import DecisionTreeRegressor
 
 # def preprocess(x_train, y_train):
 #     mm = MinMaxScaler()
@@ -17,12 +9,12 @@ from RossmannStoreSales import LossFuction
 #     scalered_dis = mm.fit_transform(x_train[["CompetitionDistance"]])
 #     x_train["CompetitionDistance"] = pandas.DataFrame(scalered_dis, columns=["CompetitionDistance"])
 #     return x_train, y_train
-from RossmannStoreSales.Compare import compareResult, compareResultMM
+from RossmannStoreSales.Compare import compareResultMM
 from RossmannStoreSales.Preprocess import preprocess, preprocessMM
 
 
 def decisionTree(x_train, y_train):
-    x_train, y_train = preprocess(x_train, y_train)
+    x_train= preprocess(x_train)
     reg = DecisionTreeRegressor()
     score = cross_val_score(reg, x_train, y_train, cv=StratifiedKFold(10))
     # reg.fit(x_train, y_train)

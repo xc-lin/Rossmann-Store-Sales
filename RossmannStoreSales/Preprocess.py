@@ -2,7 +2,7 @@ import pandas
 from sklearn.preprocessing import MinMaxScaler
 
 
-def preprocess(x_train, y_train):
+def preprocess(x_train):
     one_hot_code_features = ["DayOfWeek", "StateHoliday",  "StoreType", "Assortment",
                              "Year", "Month", "Day","Promo2SinceWeek",
                              "Promo2SinceYear"]
@@ -17,7 +17,7 @@ def preprocess(x_train, y_train):
 
     # XgboostModel.xgboostModel(x_train, y_train, x_valid, y_valid)
     # x_train = pandas.concat([one_hot_part, scalered_dis], axis=1)
-    return x_train, y_train
+    return x_train
 def preprocessMM(x_train, y_train):
     x_train["CompetitionDistance"] = (x_train["CompetitionDistance"] - x_train["CompetitionDistance"].min()) / (
             x_train["CompetitionDistance"].max() - x_train["CompetitionDistance"].min())
