@@ -1,17 +1,16 @@
+import joblib
 import numpy as np
 import pandas
-from matplotlib import pyplot as plt
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
-from xgboost import plot_importance
 import xgboost as xgb
-
-from RossmannStoreSales import LinearRegressionModel, Tree, Ensemble
+from matplotlib import pyplot as plt
+from sklearn.model_selection import train_test_split
+from xgboost import plot_importance
 
 
 def handleZero(y):
     w = np.zeros(y.shape, dtype=float)
     ind = y != 0
-    w[ind] = 1. / (y[ind] ** 2)
+    w[ind] = 1. / (y[ind])
     return w
 
 
@@ -27,11 +26,14 @@ def rmspe(y_hat, y):
     y = y.get_label()
     y = np.exp(y) - 1
     y_hat = np.exp(y_hat) - 1
-    result = basicRmspe(y, y_hat)
+    one_over_y = handleZero(y)
+    s1 = one_over_y * (y - y_hat)
+    s2 = np.mean(s1 ** 2)
+    result = np.sqrt(s2)
     return "rmspe", result
 
 
-a = 0
+
 pandas.set_option("display.max_columns", 1000)
 pandas.set_option("display.max_rows", 1000)
 store_data = pandas.read_csv("../input/store.csv")
@@ -78,7 +80,6 @@ def dataProcess(data):
     data["Day"] = data["Date"].apply(lambda x: int(x.split("-")[2]))
     #  Convert PromoInterval to whether this month is in the promotion date
     data["IsInPromo"] = data.apply(lambda x: 1 if x["Month"] in x["PromoInterval"] else 0, axis=1)
-
     #  Convert the Month to int
     data["Month"] = data["Date"].apply(lambda x: int(x.split("-")[1]))
     # add the feature of Week of year and day of year
@@ -163,7 +164,7 @@ plt.plot(competitionDistance_Sales["CompetitionDistance"], competitionDistance_S
 plt.xlabel("CompetitionDistance")
 plt.ylabel("Sales")
 plt.show()
-'''
+
 competitionOpenSinceMonth_Sales = \
     train_data[train_data["CompetitionOpenSinceMonth"] != 0].groupby("CompetitionOpenSinceMonth", as_index=False)[
         ["Sales"]].mean()
@@ -175,7 +176,6 @@ plt.show()
 
 
 
-'''
 open_Sales = train_data.groupby("Open", as_index=False)[["Sales"]].mean()
 sns.barplot(data=open_Sales, x="Open", y="Sales")
 plt.xlabel("Open")
@@ -236,13 +236,14 @@ sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
 plt.show()
 
 '''
-#
-extractedFeatures = ["Store", "WeekOfYear", "DayOfYear","DayOfWeek", "Promo", "IsInPromo", "StateHoliday", "SchoolHoliday", "Open",
-                     "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
-                     "CompetitionOpenSinceYear",
-                     "Promo2", "Year", "Month", "Day", "Promo2SinceWeek", "Promo2SinceYear",
-                     "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", ]
 
+extractedFeatures = ["Store", "WeekOfYear", "DayOfYear", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
+                     "StoreType",
+                     "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear",
+                     "Promo2",
+                     "IsInPromo", "Year", "Month", "Day", "Open", "Promo2SinceWeek", "Promo2SinceYear"]
+
+# train_data=train_data[train_data["Sales"]>0]
 x_train = train_data[extractedFeatures]
 y_train = train_data["Sales"]
 
@@ -250,11 +251,16 @@ features = extractedFeatures.copy()
 features.append("Sales")
 train = train_data[features]
 train, valid = train_test_split(train, test_size=0.1, random_state=42)
+# valid, test = train_test_split(valid, test_size=0.3, random_state=15)
 
 y_train_v = train[["Sales"]]
 x_train_v = train.drop("Sales", axis=1)
+
 y_valid = valid[["Sales"]]
 x_valid = valid.drop("Sales", axis=1)
+
+# y_test = test[["Sales"]]
+# x_test = test.drop("Sales", axis=1)
 
 # LinearRegressionModel.linearRegression(x_train, y_train)
 
@@ -383,16 +389,22 @@ x_valid = valid.drop("Sales", axis=1)
 # submission.to_csv('submission.csv', index=False)
 
 # Xgboost
+# xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data,extractedFeatures)
+
+
 print(extractedFeatures)
 
 y_train_v = np.log(1 + y_train_v)
 y_valid = np.log(1 + y_valid)
+# y_test = np.log(1 + y_test)
 
-dtrain = xgb.DMatrix(x_train_v, y_train_v)
-dvalid = xgb.DMatrix(x_valid, y_valid)
+
+train_matrix = xgb.DMatrix(x_train_v, y_train_v)
+valid_matrix = xgb.DMatrix(x_valid, y_valid)
+# dtest = xgb.DMatrix(x_test, y_test)
 print()
-num_round = 7000
-evallist = [(dtrain, 'train'), (dvalid, 'valid')]
+num_round = 10000
+evallist = [(train_matrix, 'train'), (valid_matrix, 'valid')]
 
 param = {'max_depth': 9,
          'eta': 0.06,
@@ -402,28 +414,40 @@ param = {'max_depth': 9,
 
 plst = list(param.items())
 print(123)
-model = xgb.train(plst, dtrain, num_round, evallist,
-                  feval=rmspe, verbose_eval=1, early_stopping_rounds=2)
-
-score = cross_val_score(model, x_train, y_train, cv=StratifiedKFold(2))
-print("LogisticRegression:")
-print("10-folder cross validation score: ", score)
-print("mean score: ", np.mean(score))
+# y_train = np.log(1 + y_train)
+# dtrain2 = xgb.DMatrix(x_train, y_train)
+# res = xgb.cv(plst, dtrain2, num_round, feval=rmspe, verbose_eval=1, early_stopping_rounds=2, nfold=2)
+# print(res)
+reg = xgb.train(plst, train_matrix, num_round, evallist,
+                feval=rmspe, verbose_eval=1, early_stopping_rounds=50)
+joblib.dump(reg, '../model/Xgboost.pkl')
+factor = 0.975
+reg = joblib.load("../model/Xgboost.pkl")
 print(123)
-# Print Feature Importance
-plt.figure(figsize=(18, 8))
+y_valid_hat = reg.predict(valid_matrix)
 
-plot_importance(model)
+plt.title("Xgboost predict data after correction")
+plt.plot((np.exp(y_valid_hat[::900]) - 1)*factor)
+plt.plot(np.exp(y_valid.values[::900]) - 1)
+plt.legend(["y_hat", "real"])
 plt.show()
-a = 0
+
+
+# Print Feature Importance
+
+plt.subplots(figsize=(30, 10))
+plot_importance(reg)
+plt.show()
+
 
 submit = test_data
 dsubmit = xgb.DMatrix(submit[extractedFeatures])
-predictions = model.predict(dsubmit)
+predictions = reg.predict(dsubmit)
 
 df_predictions = submit['Id'].reset_index()
 df_predictions['Id'] = df_predictions['Id'].astype('int')
-df_predictions['Sales'] = (np.exp(predictions) - 1) * 0.985  # Scale Back
 
+
+df_predictions['Sales'] = (np.exp(predictions) - 1) * factor  # Scale Back
 df_predictions.sort_values('Id', inplace=True)
 df_predictions[['Id', 'Sales']].to_csv('solution.csv', index=False)

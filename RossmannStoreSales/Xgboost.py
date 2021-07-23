@@ -4,27 +4,27 @@ from matplotlib import pyplot as plt
 from xgboost import plot_importance
 
 
-# # Thanks for providing this in the forum
-# def ToWeight(y):
-#     w = np.zeros(y.shape, dtype=float)
-#     ind = y != 0
-#     w[ind] = 1. / (y[ind] ** 2)
-#     return w
-#
-#
-# def rmspe(yhat, y):
-#     w = ToWeight(y)
-#     rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
-#     return rmspe
-#
-#
-# def rmspe_xg(yhat, y):
-#     y = y.get_label()
-#     y = np.exp(y) - 1
-#     yhat = np.exp(yhat) - 1
-#     w = ToWeight(y)
-#     rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
-#     return "rmspe", rmspe
+# Thanks for providing this in the forum
+def ToWeight(y):
+    w = np.zeros(y.shape, dtype=float)
+    ind = y != 0
+    w[ind] = 1. / (y[ind] ** 2)
+    return w
+
+
+def rmspe(yhat, y):
+    w = ToWeight(y)
+    rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
+    return rmspe
+
+
+def rmspe_xg(yhat, y):
+    y = y.get_label()
+    y = np.exp(y) - 1
+    yhat = np.exp(yhat) - 1
+    w = ToWeight(y)
+    rmspe = np.sqrt(np.mean(w * (y - yhat) ** 2))
+    return "rmspe", rmspe
 
 
 def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data, extractedFeatures):
@@ -53,7 +53,7 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data, extractedFeatures
     plst = list(param.items())
     print(123)
     model = xgb.train(plst, dtrain, num_round, evallist,
-                      feval=rmspe, verbose_eval=1, early_stopping_rounds=100)
+                      feval=rmspe_xg, verbose_eval=1, early_stopping_rounds=100)
     print(123)
     # Print Feature Importance
     plt.figure(figsize=(18, 8))
@@ -71,4 +71,4 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data, extractedFeatures
     df_predictions['Sales'] = (np.exp(predictions) - 1) * 0.985  # Scale Back
 
     df_predictions.sort_values('Id', inplace=True)
-    df_predictions[['Id', 'Sales']].to_csv('solution.csv', index=False)
+    df_predictions[['Id', 'Sales']].to_csv('solution3.csv', index=False)
