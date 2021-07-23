@@ -128,13 +128,13 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
     evals = [(train_matrix, 'train'), (valid_matrix, 'valid')]
     reg = xgb.train(params, train_matrix, num_boost_round, evals,
                     feval=LossFuction.rmspe, verbose_eval=1, early_stopping_rounds=50)
-    joblib.dump(reg, '../model/Xgboost.pkl')
+    # joblib.dump(reg, '../model/Xgboost.pkl')
 
     print("xgboost training is finished")
     print()
 
     print("Start generating plots ...")
-    reg = joblib.load("../model/Xgboost.pkl")
+    # reg = joblib.load("../model/Xgboost.pkl")
 
     y_valid_hat = reg.predict(valid_matrix)
     correction_factor = 0.975
@@ -159,7 +159,7 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
 
     submission_df['Sales'] = (np.exp(y_test_hat) - 1) * correction_factor
     submission_df.sort_values('Id', inplace=True)
-    submission_df[['Id', 'Sales']].to_csv('submission.csv', index=False)
+    submission_df[['Id', 'Sales']].to_csv('submission2.csv', index=False)
     print("submission.csv generation is finished...")
     print()
 

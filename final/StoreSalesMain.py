@@ -62,7 +62,7 @@ def dataProcess(data):
 
 
 def extractFeatures(train_data, test_data):
-    extractedFeatures = ["Store", "DayOfYear","WeekOfYear","DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
+    extractedFeatures = ["Store", "WeekOfYear", "DayOfYear", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
                          "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
                          "CompetitionOpenSinceYear", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open",
                          "Promo2SinceWeek", "Promo2SinceYear"]
