@@ -88,4 +88,9 @@ python3 StoreSalesMain.py --model randomForest --nfolds 10
 ├── Model.py                // Train different models
 ├── StoreSalesMain.py       // Main program file
 ├── Xgboost.pkl             // The model of xgboost
+├── README.md               // Readme file
+├── store.csv               // Data of stores
+├── train.csv               // Data of training
+├── test.csv                // Data of test
+└── submission.csv          // the predict data of test
 ```
