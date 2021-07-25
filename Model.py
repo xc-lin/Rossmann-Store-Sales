@@ -133,8 +133,8 @@ def randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds):
 
 def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
     print("Start training xgboost model...")
-    # y_train_v = np.log(1 + y_train_v)
-    # y_valid = np.log(1 + y_valid)
+    y_train_v = np.log(1 + y_train_v)
+    y_valid = np.log(1 + y_valid)
     train_matrix = xgb.DMatrix(x_train_v, y_train_v)
     valid_matrix = xgb.DMatrix(x_valid, y_valid)
 
@@ -148,7 +148,7 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
     evals = [(train_matrix, 'train'), (valid_matrix, 'valid')]
     reg = xgb.train(params, train_matrix, num_boost_round, evals,
                     feval=LossFuction.rmspe, verbose_eval=1, early_stopping_rounds=50)
-    # joblib.dump(reg, 'Xgboost.pkl')
+    joblib.dump(reg, 'Xgboost.pkl')
 
     print("xgboost training is finished")
     print()
@@ -179,14 +179,14 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
 
     submission_df['Sales'] = (np.exp(y_test_hat) - 1) * correction_factor
     submission_df.sort_values('Id', inplace=True)
-    submission_df[['Id', 'Sales']].to_csv('submission.csv', index=False)
+    submission_df[['Id', 'Sales']].to_csv('submission2.csv', index=False)
     print("submission.csv generation is finished...")
     print()
 
 
 def xgboostPredict(x_valid, y_valid, test_data):
     print("Start generating plots ...")
-    # y_valid = np.log(1 + y_valid)
+    y_valid = np.log(1 + y_valid)
     valid_matrix = xgb.DMatrix(x_valid, y_valid)
 
     reg = joblib.load("Xgboost.pkl")
@@ -213,7 +213,7 @@ def xgboostPredict(x_valid, y_valid, test_data):
 
     submission_df['Sales'] = (np.exp(y_test_hat) - 1) * correction_factor
     submission_df.sort_values('Id', inplace=True)
-    submission_df[['Id', 'Sales']].to_csv('submission.csv', index=False)
+    submission_df[['Id', 'Sales']].to_csv('submission2.csv', index=False)
     print("submission.csv generation is finished...")
     print()
 

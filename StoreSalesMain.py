@@ -63,7 +63,6 @@ def dataProcess(data):
 
 
 def extractFeatures(train_data, test_data):
-    train_data["Sales"] = np.log(1 + train_data["Sales"])
     extractedFeatures = ["Store", "WeekOfYear", "DayOfYear", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
                          "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
                          "CompetitionOpenSinceYear", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open",
