@@ -1,5 +1,6 @@
 import argparse
 
+import numpy as np
 import pandas
 from sklearn.model_selection import train_test_split
 
@@ -62,6 +63,7 @@ def dataProcess(data):
 
 
 def extractFeatures(train_data, test_data):
+    train_data["Sales"] = np.log(1 + train_data["Sales"])
     extractedFeatures = ["Store", "WeekOfYear", "DayOfYear", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
                          "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
                          "CompetitionOpenSinceYear", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open",
@@ -85,6 +87,7 @@ def extractFeatures(train_data, test_data):
     test_features = extractedFeatures.copy()
     test_features.append("Id")
     test_data = test_data[test_features]
+
     return x_train_v, y_train_v, x_valid, y_valid, test_data
 
 

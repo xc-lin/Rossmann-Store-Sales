@@ -133,8 +133,8 @@ def randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds):
 
 def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
     print("Start training xgboost model...")
-    y_train_v = np.log(1 + y_train_v)
-    y_valid = np.log(1 + y_valid)
+    # y_train_v = np.log(1 + y_train_v)
+    # y_valid = np.log(1 + y_valid)
     train_matrix = xgb.DMatrix(x_train_v, y_train_v)
     valid_matrix = xgb.DMatrix(x_valid, y_valid)
 
@@ -186,7 +186,7 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
 
 def xgboostPredict(x_valid, y_valid, test_data):
     print("Start generating plots ...")
-    y_valid = np.log(1 + y_valid)
+    # y_valid = np.log(1 + y_valid)
     valid_matrix = xgb.DMatrix(x_valid, y_valid)
 
     reg = joblib.load("Xgboost.pkl")

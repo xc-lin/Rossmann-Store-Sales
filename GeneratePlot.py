@@ -1,42 +1,48 @@
+import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 
+# sns.pairplot(train_data[0:1000])
+# plt.show()
+from numpy.linalg import norm
+
 
 def generatePlot(train_data):
+    '''
     plt.subplots(figsize=(30, 25))
-    sns.heatmap(train_data.corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.1, center=0)
-    sns.pairplot(train_data[0:1000])
-
-    store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
-    sns.boxplot(store_sales["Sales"])
-    sns.displot(store_sales, x="Sales")
+    plt.title("heatmap of features")
+    sns.heatmap(train_data[::500].corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.4, center=0)
     plt.show()
+'''
+    a, sub = plt.subplots(1, 1, figsize=(5, 5))
 
+    # store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
+    # sns.boxplot(train_data["Sales"])
+    sns.displot(train_data["Sales"], ax=sub)
+    plt.show()
+    exit()
     sales_per_year = train_data.groupby("Year", as_index=False)[["Sales"]].mean()
-
-    plt.subplot(3, 1, 1)
-    plt.title("Average sale of every year")
-    sns.barplot(data=sales_per_year, x="Year", y="Sales")
+    a, (sub1, sub2, sub3) = plt.subplots(3, 1, figsize=(10, 12))
+    # plt.title("Average sales for a year")
+    sns.barplot(data=sales_per_year, x="Year", y="Sales", ax=sub1)
     plt.xlabel("Year")
     plt.ylabel("Sales")
 
     sales_per_month = train_data.groupby("Month", as_index=False)[["Sales"]].mean()
-    plt.subplot(3, 1, 2)
-    plt.title("Average sale of every month")
-    plt.plot(sales_per_month["Month"], sales_per_month["Sales"], "o-")
+    # plt.title("Average sale for a month")
+    sns.pointplot(data=sales_per_month, x="Month", y="Sales", ax=sub2)
     plt.xlabel("Month")
     plt.ylabel("Sales")
 
     sales_per_day = train_data.groupby("Day", as_index=False)[["Sales"]].mean()
-    plt.subplot(3, 1, 3)
-    plt.title("Average sale of every day")
-    plt.plot(sales_per_day["Day"], sales_per_day["Sales"], "o-")
+    # plt.title("Average sale for a day")
+    sns.pointplot(data=sales_per_day, x="Day", y="Sales", ax=sub3)
     plt.xlabel("Day")
     plt.ylabel("Sales")
     plt.show()
 
     sales_per_month_year = train_data.groupby(["Month", "Year"], as_index=False)[["Sales"]].mean()
-    plt.title("Average sale of every month in different year")
+    plt.title("Average sale for a month in different year")
     sns.pointplot(data=sales_per_month_year, x="Month", y="Sales", hue="Year")
     plt.xlabel("Month")
     plt.ylabel("Sales")
@@ -44,15 +50,16 @@ def generatePlot(train_data):
 
     a, (sub1, sub2) = plt.subplots(1, 2, figsize=(16, 8))
     sales_store_type = train_data.groupby("StoreType", as_index=False)[["Sales"]].mean()
-    plt.title("Average sale of every StoreType")
+    plt.title("Average sales by different store types")
     sns.barplot(data=sales_store_type, x="StoreType", y="Sales", ax=sub1)
 
     sales_assortment = train_data.groupby("Assortment", as_index=False)[["Sales"]].mean()
-    plt.title("Average sale of every Assortment")
+    plt.title("Average sale of by different assortment")
     sns.barplot(data=sales_assortment, x="Assortment", y="Sales", ax=sub2)
     plt.show()
 
     competition_distance_sales = train_data.groupby("CompetitionDistance", as_index=False)[["Sales"]].mean()
+    plt.title("The impact of distance from competitors on sales")
     plt.plot(competition_distance_sales["CompetitionDistance"], competition_distance_sales["Sales"], "-")
     plt.xlabel("CompetitionDistance")
     plt.ylabel("Sales")
@@ -61,6 +68,7 @@ def generatePlot(train_data):
     competition_open_since_month_sales = \
         train_data[train_data["CompetitionOpenSinceMonth"] != 0].groupby("CompetitionOpenSinceMonth", as_index=False)[
             ["Sales"]].mean()
+    plt.title("The impact of competitor opening time on sales")
     plt.plot(competition_open_since_month_sales["CompetitionOpenSinceMonth"],
              competition_open_since_month_sales["Sales"],
              "-")
@@ -69,17 +77,25 @@ def generatePlot(train_data):
     plt.show()
 
     open_sales = train_data.groupby("Open", as_index=False)[["Sales"]].mean()
+    plt.title("The impact of open on sales")
     sns.barplot(data=open_sales, x="Open", y="Sales")
     plt.xlabel("Open")
     plt.ylabel("Sales")
     plt.show()
 
+    plt.title("The impact of open on sales")
+    sns.scatterplot(data=train_data[train_data["Sales"] < 1000], x="Open", y="Sales")
+    plt.xlabel("Open")
+    plt.ylabel("Sales")
+    plt.show()
+
+    plt.title("The impact of promo on sales")
     sns.boxplot(data=train_data, x="Promo", y="Sales")
     plt.show()
 
     a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
-    sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="Promo", ax=sub1)
-    sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="Promo2", ax=sub2)
+    sns.scatterplot(data=train_data[::500], x="Customers", y="Sales", hue="Promo", ax=sub1)
+    sns.scatterplot(data=train_data[::500], x="Customers", y="Sales", hue="Promo2", ax=sub2)
     plt.show()
 
     a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
@@ -97,8 +113,8 @@ def generatePlot(train_data):
     plt.show()
 
     a, (sub1, sub2) = plt.subplots(1, 2, figsize=(20, 8))
-    sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="SchoolHoliday", ax=sub1)
-    sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="StateHoliday", ax=sub2)
+    sns.scatterplot(data=train_data[::500], x="Customers", y="Sales", hue="SchoolHoliday", ax=sub1)
+    sns.scatterplot(data=train_data[::500], x="Customers", y="Sales", hue="StateHoliday", ax=sub2)
     plt.show()
 
     a, (sub1, sub2) = plt.subplots(2, 2, figsize=(20, 20))
@@ -120,5 +136,6 @@ def generatePlot(train_data):
 
     sns.barplot(data=promo_sales, x="IsInPromo", y="Sales")
     plt.show()
-    sns.scatterplot(data=train_data, x="Customers", y="Sales", hue="IsInPromo")
+
+    sns.scatterplot(data=train_data[::100], x="Customers", y="Sales", hue="IsInPromo")
     plt.show()
