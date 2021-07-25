@@ -179,7 +179,7 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
 
     submission_df['Sales'] = (np.exp(y_test_hat) - 1) * correction_factor
     submission_df.sort_values('Id', inplace=True)
-    submission_df[['Id', 'Sales']].to_csv('submission2.csv', index=False)
+    submission_df[['Id', 'Sales']].to_csv('submission.csv', index=False)
     print("submission.csv generation is finished...")
     print()
 
