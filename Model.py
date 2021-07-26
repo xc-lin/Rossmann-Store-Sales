@@ -6,7 +6,7 @@ import pandas
 from matplotlib import pyplot as plt
 from sklearn import linear_model
 from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
-from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
 import xgboost as xgb
 from xgboost import plot_importance
@@ -111,24 +111,47 @@ def gradientBoosting(x_train_v, y_train_v, x_valid, y_valid, nfolds):
     predictDataPlot(reg, x_train_v, y_train_v, x_valid, y_valid)
 
 
+# def randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds):
+#     print("Start normalize data...")
+#     x_train_v = preprocess(x_train_v)
+#     x_valid = preprocess(x_valid)
+#     print("data normalization is finished")
+#     print()
+#     print("Start fitting and cross validation...")
+#     reg = RandomForestRegressor(n_jobs=-1)
+#     t5 = time.time()
+#     score = cross_val_score(reg, x_train_v, y_train_v, cv=StratifiedKFold(nfolds))
+#     t6 = time.time()
+#     print(reg.__class__.__name__)
+#     print()
+#     print("*" * 5, "%d-folder cross validation score: " % nfolds, score, "*" * 5)
+#     print("*" * 5, "mean score: ", np.mean(score), "*" * 5)
+#     print("*" * 5, "fit and cross validation is finished", "*" * 5)
+#     print()
+#     predictDataPlot(reg, x_train_v, y_train_v, x_valid, y_valid)
+
 def randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds):
-    print("Start normalize data...")
-    x_train_v = preprocess(x_train_v)
-    x_valid = preprocess(x_valid)
-    print("data normalization is finished")
-    print()
-    print("Start fitting and cross validation...")
+    # reg = RandomForestRegressor()
+    # reg.fit(x_train, y_train)
+    # print(reg.score(x_valid,y_valid))
+    # x_train = x_train[x_train["Year"] == 2015].iloc[:10000]
+    # x_valid = x_valid[x_valid["Year"] == 2015].iloc[:10000]
+    param = {"n_estimators": range(150, 200, 10),
+             "min_samples_leaf": range(1, 10, 2)
+             }
+    print(111111)
+    t1 = time.time()
     reg = RandomForestRegressor(n_jobs=-1)
-    t5 = time.time()
-    score = cross_val_score(reg, x_train_v, y_train_v, cv=StratifiedKFold(nfolds))
-    t6 = time.time()
-    print(reg.__class__.__name__)
-    print()
-    print("*" * 5, "%d-folder cross validation score: " % nfolds, score, "*" * 5)
-    print("*" * 5, "mean score: ", np.mean(score), "*" * 5)
-    print("*" * 5, "fit and cross validation is finished", "*" * 5)
-    print()
-    predictDataPlot(reg, x_train_v, y_train_v, x_valid, y_valid)
+    gs = GridSearchCV(estimator=reg, param_grid=param)
+    gs.fit(x_train_v, y_train_v)
+    t2 = time.time()
+    print("best score: %f, best param: " % gs.best_score_, gs.best_params_)
+    print("time is ", t2 - t1)
+    model=gs.best_estimator_
+    joblib.dump(model, 'randomForest.pkl')
+
+
+
 
 
 def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
