@@ -161,9 +161,9 @@ def main():
         print("-" * 20, "GradientBoosting test is finished", "-" * 20)
 
     elif args.model == "randomForest":
-        print("-" * 20, "Starting testing GradientBoosting...", "-" * 20)
+        print("-" * 20, "Starting testing RandomForest...", "-" * 20)
         Model.randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds)
-        print("-" * 20, "GradientBoosting test is finished", "-" * 20)
+        print("-" * 20, "RandomForest test is finished", "-" * 20)
 
     elif args.model == "xgboost":
         print("-" * 20, "Starting testing xgboost...", "-" * 20)
