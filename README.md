@@ -1,4 +1,6 @@
-# Rossmann-Store-Sales (Score: 0.10362)
+# Readme
+
+# **Rossmann-Store-Sales (Score: 0.10362)**
 
 # Introduction
 
@@ -87,10 +89,11 @@ python3 StoreSalesMain.py --model randomForest --nfolds 10
 ├── LossFuction.py          // Loss fuction 
 ├── Model.py                // Train different models
 ├── StoreSalesMain.py       // Main program file
-├── Xgboost.pkl             // The model of xgboost
+├── Xgboost.pkl             // The pre-trained model of xgboost
 ├── README.md               // Readme file
-├── store.csv               // Data of stores
-├── train.csv               // Data of training
-├── test.csv                // Data of test
+├── input                   // Data folder
+│   ├── store.csv           // Data of stores
+│   ├── test.csv            // Data of test
+│   └── train.csv           // Data of training
 └── submission.csv          // the predict data of test
 ```

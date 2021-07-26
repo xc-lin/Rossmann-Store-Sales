@@ -1,4 +1,5 @@
 import argparse
+import warnings
 
 import numpy as np
 import pandas
@@ -7,8 +8,7 @@ from sklearn.model_selection import train_test_split
 import Model
 from GeneratePlot import generatePlot
 
-
-# warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 
 def handleMissingValue(train_data, store_data, test_data):
@@ -103,9 +103,9 @@ def main():
     nfolds = args.nfolds
     pandas.set_option("display.max_columns", 1000)
     pandas.set_option("display.max_rows", 1000)
-    store_data = pandas.read_csv("store.csv")
-    train_data = pandas.read_csv("train.csv")
-    test_data = pandas.read_csv("test.csv")
+    store_data = pandas.read_csv("input/store.csv")
+    train_data = pandas.read_csv("input/train.csv")
+    test_data = pandas.read_csv("input/test.csv")
     print("-" * 20, "train_data", "-" * 20)
     print(train_data.info())
     print()

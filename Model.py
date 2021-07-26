@@ -1,4 +1,5 @@
 import time
+import warnings
 
 import joblib
 import numpy as np
@@ -13,8 +14,7 @@ from xgboost import plot_importance
 
 import LossFuction
 
-
-# warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 
 def preprocess(x_train):
@@ -111,35 +111,30 @@ def gradientBoosting(x_train_v, y_train_v, x_valid, y_valid, nfolds):
     predictDataPlot(reg, x_train_v, y_train_v, x_valid, y_valid)
 
 
-# def randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds):
-#     print("Start normalize data...")
-#     x_train_v = preprocess(x_train_v)
-#     x_valid = preprocess(x_valid)
-#     print("data normalization is finished")
-#     print()
-#     print("Start fitting and cross validation...")
-#     reg = RandomForestRegressor(n_jobs=-1)
-#     t5 = time.time()
-#     score = cross_val_score(reg, x_train_v, y_train_v, cv=StratifiedKFold(nfolds))
-#     t6 = time.time()
-#     print(reg.__class__.__name__)
-#     print()
-#     print("*" * 5, "%d-folder cross validation score: " % nfolds, score, "*" * 5)
-#     print("*" * 5, "mean score: ", np.mean(score), "*" * 5)
-#     print("*" * 5, "fit and cross validation is finished", "*" * 5)
-#     print()
-#     predictDataPlot(reg, x_train_v, y_train_v, x_valid, y_valid)
-
 def randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds):
-    # reg = RandomForestRegressor()
-    # reg.fit(x_train, y_train)
-    # print(reg.score(x_valid,y_valid))
-    # x_train = x_train[x_train["Year"] == 2015].iloc[:10000]
-    # x_valid = x_valid[x_valid["Year"] == 2015].iloc[:10000]
+    print("Start normalize data...")
+    x_train_v = preprocess(x_train_v)
+    x_valid = preprocess(x_valid)
+    print("data normalization is finished")
+    print()
+    print("Start fitting and cross validation...")
+    reg = RandomForestRegressor(n_jobs=-1)
+    t5 = time.time()
+    score = cross_val_score(reg, x_train_v, y_train_v, cv=StratifiedKFold(nfolds))
+    t6 = time.time()
+    print(reg.__class__.__name__)
+    print()
+    print("*" * 5, "%d-folder cross validation score: " % nfolds, score, "*" * 5)
+    print("*" * 5, "mean score: ", np.mean(score), "*" * 5)
+    print("*" * 5, "fit and cross validation is finished", "*" * 5)
+    print()
+    predictDataPlot(reg, x_train_v, y_train_v, x_valid, y_valid)
+
+
+def randomForestParamOptimization(x_train_v, y_train_v, x_valid, y_valid, nfolds):
     param = {"n_estimators": range(150, 200, 10),
              "min_samples_leaf": range(1, 10, 2)
              }
-    print(111111)
     t1 = time.time()
     reg = RandomForestRegressor(n_jobs=-1)
     gs = GridSearchCV(estimator=reg, param_grid=param)
@@ -147,11 +142,8 @@ def randomForest(x_train_v, y_train_v, x_valid, y_valid, nfolds):
     t2 = time.time()
     print("best score: %f, best param: " % gs.best_score_, gs.best_params_)
     print("time is ", t2 - t1)
-    model=gs.best_estimator_
+    model = gs.best_estimator_
     joblib.dump(model, 'randomForest.pkl')
-
-
-
 
 
 def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
@@ -194,15 +186,15 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
     print()
 
     print("Start generating submission.csv ...")
-    submission_df = test_data['Id'].reset_index()
-    submission_df['Id'] = submission_df['Id'].astype('int')
+    submission_df = pandas.DataFrame()
+    submission_df["Id"] = test_data['Id']
 
     test_matrix = xgb.DMatrix(test_data.drop("Id", axis=1))
     y_test_hat = reg.predict(test_matrix)
 
     submission_df['Sales'] = (np.exp(y_test_hat) - 1) * correction_factor
     submission_df.sort_values('Id', inplace=True)
-    submission_df[['Id', 'Sales']].to_csv('submission2.csv', index=False)
+    submission_df.to_csv('submission.csv', index=False)
     print("submission.csv generation is finished...")
     print()
 
@@ -228,15 +220,15 @@ def xgboostPredict(x_valid, y_valid, test_data):
     print()
 
     print("Start generating submission.csv ...")
-    submission_df = test_data['Id'].reset_index()
-    submission_df['Id'] = submission_df['Id'].astype('int')
+    submission_df = pandas.DataFrame()
+    submission_df["Id"] = test_data['Id']
 
     test_matrix = xgb.DMatrix(test_data.drop("Id", axis=1))
     y_test_hat = reg.predict(test_matrix)
 
     submission_df['Sales'] = (np.exp(y_test_hat) - 1) * correction_factor
     submission_df.sort_values('Id', inplace=True)
-    submission_df[['Id', 'Sales']].to_csv('submission2.csv', index=False)
+    submission_df.to_csv('submission.csv', index=False)
     print("submission.csv generation is finished...")
     print()
 
