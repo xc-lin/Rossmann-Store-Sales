@@ -8,19 +8,18 @@ from numpy.linalg import norm
 
 
 def generatePlot(train_data):
-    '''
+
     plt.subplots(figsize=(30, 25))
     plt.title("heatmap of features")
     sns.heatmap(train_data[::500].corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.4, center=0)
     plt.show()
-'''
-    a, sub = plt.subplots(1, 1, figsize=(5, 5))
 
-    # store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
-    # sns.boxplot(train_data["Sales"])
-    sns.displot(train_data["Sales"], ax=sub)
+
+    store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
+    sns.boxplot(store_sales["Sales"])
+    sns.displot(store_sales["Sales"])
     plt.show()
-    exit()
+
     sales_per_year = train_data.groupby("Year", as_index=False)[["Sales"]].mean()
     a, (sub1, sub2, sub3) = plt.subplots(3, 1, figsize=(10, 12))
     # plt.title("Average sales for a year")

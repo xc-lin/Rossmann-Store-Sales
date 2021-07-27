@@ -63,6 +63,7 @@ def dataProcess(data):
 
 
 def extractFeatures(train_data, test_data):
+    train_data = train_data.drop(train_data[train_data["Customers"] > 7000].index, axis=0)
     extractedFeatures = ["Store", "WeekOfYear", "DayOfYear", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
                          "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
                          "CompetitionOpenSinceYear", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open",
@@ -106,6 +107,7 @@ def main():
     store_data = pandas.read_csv("input/store.csv")
     train_data = pandas.read_csv("input/train.csv")
     test_data = pandas.read_csv("input/test.csv")
+
     print("-" * 20, "train_data", "-" * 20)
     print(train_data.info())
     print()
