@@ -17,6 +17,7 @@ import LossFuction
 warnings.filterwarnings("ignore")
 
 
+# normalize and one-hot code
 def preprocess(x_train):
     one_hot_code_features = ["DayOfWeek", "StateHoliday", "StoreType", "Assortment",
                              "Year", "Month", "Day", "Promo2SinceWeek",
@@ -27,6 +28,7 @@ def preprocess(x_train):
     return x_train
 
 
+# normalize data
 def preprocessNormalize(x_train):
     x_train["CompetitionDistance"] = (x_train["CompetitionDistance"] - x_train["CompetitionDistance"].min()) / (
             x_train["CompetitionDistance"].max() - x_train["CompetitionDistance"].min())
@@ -146,6 +148,7 @@ def randomForestParamOptimization(x_train_v, y_train_v, x_valid, y_valid, nfolds
     joblib.dump(model, 'randomForest.pkl')
 
 
+# train xgboost and predict data
 def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
     print("Start training xgboost model...")
     y_train_v = np.log(1 + y_train_v)
@@ -199,12 +202,14 @@ def xgboost(x_train_v, y_train_v, x_valid, y_valid, test_data):
     print()
 
 
+# predict result without training due to the pretrained model "Xgboost.pkl"
 def xgboostPredict(x_valid, y_valid, test_data):
     print("Start generating plots ...")
     y_valid = np.log(1 + y_valid)
     valid_matrix = xgb.DMatrix(x_valid, y_valid)
 
     reg = joblib.load("Xgboost.pkl")
+
     y_valid_hat = reg.predict(valid_matrix)
     correction_factor = 0.975
     plt.title("Xgboost predict data after correction")
@@ -233,6 +238,7 @@ def xgboostPredict(x_valid, y_valid, test_data):
     print()
 
 
+# generate plots of predict data and true data
 def predictDataPlot(reg, x_train_v, y_train_v, x_valid, y_valid):
     print("Start generating the plot of predict and true data...")
     reg.fit(x_train_v, y_train_v)

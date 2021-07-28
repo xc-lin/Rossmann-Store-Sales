@@ -1,19 +1,13 @@
-import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-# sns.pairplot(train_data[0:1000])
-# plt.show()
-from numpy.linalg import norm
 
-
+# generate plots
 def generatePlot(train_data):
-
     plt.subplots(figsize=(30, 25))
     plt.title("heatmap of features")
     sns.heatmap(train_data[::500].corr(), cmap="YlGnBu", annot=True, vmin=-0.1, vmax=0.4, center=0)
     plt.show()
-
 
     store_sales = train_data.groupby("Store", as_index=False)["Sales"].mean()
     sns.boxplot(store_sales["Sales"])
@@ -107,7 +101,6 @@ def generatePlot(train_data):
     plt.show()
 
     sales_of_weekday = train_data.groupby("DayOfWeek", as_index=False)["Sales"].mean()
-
     sns.pointplot(data=sales_of_weekday, x="DayOfWeek", y="Sales", markers="o")
     plt.show()
 
@@ -117,7 +110,6 @@ def generatePlot(train_data):
     plt.show()
 
     a, (sub1, sub2) = plt.subplots(2, 2, figsize=(20, 20))
-
     school_holiday_sale_cus = train_data.groupby("SchoolHoliday", as_index=False)[["Sales", "Customers"]].mean()
     sns.barplot(data=school_holiday_sale_cus, x="SchoolHoliday", y="Sales", ax=sub1[0])
     sns.barplot(data=school_holiday_sale_cus, x="SchoolHoliday", y="Customers", ax=sub1[1])
@@ -132,7 +124,6 @@ def generatePlot(train_data):
     plt.show()
 
     promo_sales = train_data[train_data["Store"] == 30].groupby("IsInPromo", as_index=False)["Sales"].mean()
-
     sns.barplot(data=promo_sales, x="IsInPromo", y="Sales")
     plt.show()
 

@@ -21,9 +21,12 @@ def handleMissingValue(train_data, store_data, test_data):
     # set
     test_data["Open"][null_data] = test_data["DayOfWeek"][null_data].apply(lambda x: 1 if x != 7 else 0)
 
+    # merge the test_data and train_data with store_data
     train_data = pandas.merge(train_data, store_data, on="Store")
     test_data = pandas.merge(test_data, store_data, on="Store")
     # train_data=train_data[train_data["Sales"]>0]
+
+    # delete the invalid data
     train_data = train_data.loc[~((train_data['Open'] == 1) & (train_data['Sales'] == 0))]
     return train_data, test_data
 
@@ -63,7 +66,6 @@ def dataProcess(data):
 
 
 def extractFeatures(train_data, test_data):
-    train_data = train_data.drop(train_data[train_data["Customers"] > 7000].index, axis=0)
     extractedFeatures = ["Store", "WeekOfYear", "DayOfYear", "DayOfWeek", "Promo", "StateHoliday", "SchoolHoliday",
                          "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth",
                          "CompetitionOpenSinceYear", "Promo2", "IsInPromo", "Year", "Month", "Day", "Open",
@@ -75,6 +77,8 @@ def extractFeatures(train_data, test_data):
 
     features = extractedFeatures.copy()
     features.append("Sales")
+
+    # extract feature of train data
     train = train_data[features]
     train, valid = train_test_split(train, test_size=0.1, random_state=42)
     # valid, test = train_test_split(valid, test_size=0.3, random_state=15)
@@ -93,7 +97,8 @@ def extractFeatures(train_data, test_data):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plot', action='store_true', default=False, help="to generate some plots to analyse data")
+    parser.add_argument('--noPlot', action='store_true', default=False,
+                        help="not to generate some plots to analyse data")
     parser.add_argument('--model', type=str, default="xgboost", help="linear or decisionTree or extraTrees, "
                                                                      "gradientBoosting or randomForest or xgboost")
     parser.add_argument('--predict', action='store_true', default=False,
@@ -101,13 +106,16 @@ def main():
     parser.add_argument('--nfolds', type=int, default="10", help="Number of folds. Must be at least 2 default:10")
 
     args = parser.parse_args()
+
     nfolds = args.nfolds
     pandas.set_option("display.max_columns", 1000)
     pandas.set_option("display.max_rows", 1000)
+    # read input data
     store_data = pandas.read_csv("input/store.csv")
     train_data = pandas.read_csv("input/train.csv")
     test_data = pandas.read_csv("input/test.csv")
 
+    # print information of input DATA
     print("-" * 20, "train_data", "-" * 20)
     print(train_data.info())
     print()
@@ -121,6 +129,11 @@ def main():
     print("-" * 100)
 
     print("-" * 20, "Start processing data...", "-" * 20)
+
+    # handle the NAN data in test data and store data
+    # For the store data, we simply fill the nan with zero, because we can assume the nan means null.
+    # we found the the NAN data is the "Open" of Store 622 and the data in train data of store 622 is open except 7
+    # Thus, if the day of week is not 7, we fix the NAN Open data in test data with 1
     train_data, test_data = handleMissingValue(train_data, store_data, test_data)
     print("processing train data...")
     dataProcess(train_data)
@@ -128,7 +141,7 @@ def main():
     dataProcess(test_data)
     print("-" * 20, "data process finished", "-" * 20)
 
-    if args.plot:
+    if not args.noPlot:
         print("-" * 20, "Start generating plots...", "-" * 20)
         generatePlot(train_data)
         print("-" * 20, "plotsGenerating finished", "-" * 20)
@@ -142,10 +155,6 @@ def main():
         print("-" * 20, "Starting testing LinearRegression...", "-" * 20)
         Model.linearRegression(x_train_v, y_train_v, x_valid, y_valid, nfolds)
         print("-" * 20, "LinearRegression test is finished", "-" * 20)
-    # elif args.model == "ridge":
-    #     print("-" * 20, "Starting testing ExtraTrees...", "-" * 20)
-    #     Model.ridge(x_train_v, y_train_v, x_valid, y_valid, nfolds)
-    #     print("-" * 20, "ExtraTrees test is finished", "-" * 20)
 
     elif args.model == "decisionTree":
         print("-" * 20, "Starting testing DecisionTree...", "-" * 20)
