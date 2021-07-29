@@ -27,21 +27,20 @@ You can get help by typing
 ```bash
 python3 StoreSalesMain.py -h
 
-usage: StoreSalesMain.py [-h] [--plot] [--model MODEL] [--predict] [--nfolds NFOLDS]
+usage: StoreSalesMain.py [-h] [--noPlot] [--model MODEL] [--predict] [--nfolds NFOLDS]
 
 optional arguments:
   -h, --help       show this help message and exit
-  --plot           to generate some plots to analyse data
+  --noPlot         not to generate some plots to analyse data
   --model MODEL    linear or decisionTree or extraTrees, gradientBoosting or randomForest or xgboost
   --predict        predict the test data and generate submission.csv by generated xgboost model directly
   --nfolds NFOLDS  Number of folds. Must be at least 2 default:10
-
 ```
 
-Thus, you can obtain the Data analysis graphs
+Thus, you **don't want** to obtain the Data analysis graphs
 
 ```bash
-python3 StoreSalesMain.py --plot
+python3 StoreSalesMain.py --noPlot
 ```
 
 Train the *linear regression model* and get the cross validation score
@@ -85,15 +84,17 @@ python3 StoreSalesMain.py --model randomForest --nfolds 10
 ## File introduction
 
 ```bash
-├── GeneratePlot.py         // Generate data analysis graph
-├── LossFuction.py          // Loss fuction 
-├── Model.py                // Train different models
-├── StoreSalesMain.py       // Main program file
-├── Xgboost.pkl             // The pre-trained model of xgboost
-├── README.md               // Readme file
-├── input                   // Data folder
-│   ├── store.csv           // Data of stores
-│   ├── test.csv            // Data of test
-│   └── train.csv           // Data of training
-└── submission.csv          // the predict data of test
+├── GeneratePlot.py             // Generate data analysis graph
+├── LossFuction.py              // Loss fuction 
+├── Model.py                    // Train different models
+├── StoreSalesMain.py           // Main program file
+├── Xgboost.pkl                 // The pre-trained model of xgboost
+├── README.md                   // Readme file
+├── input                       // Data folder
+│   ├── store.csv               // Data of stores
+│   ├── test.csv                // Data of test
+│   └── train.csv               // Data of training
+├── Rossmann-Store-Sales.ipynb  // jupyter notebook that has cached results
+└── submission.csv              // the predict data of test
+
 ```
