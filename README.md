@@ -1,5 +1,3 @@
-# Readme
-
 # **Rossmann-Store-Sales (Score: 0.10362)**
 
 # Introduction
@@ -20,7 +18,7 @@ In order to get better performance, we not only used the original train_data and
 
 ## How to run the code
 
-The working directory needs to be in the same directory as *[StoreSalesMain.py](http://storesalesmain.py)*  (main program file)
+The working directory needs to be in the same directory as *[StoreSalesMain.py](storesalesmain.py)*  (main program file)
 
 You can get help by typing 
 
@@ -37,7 +35,15 @@ optional arguments:
   --nfolds NFOLDS  Number of folds. Must be at least 2 default:10
 ```
 
-Thus, you **don't want** to obtain the Data analysis graphs
+You can run and get the results, plots and submission.csv without training the model by typing:
+
+**Note**: You need to download the Xgboost.pkl file from google drive: [https://drive.google.com/file/d/1lPzG-XooVw5cA4QOp6GXJzChzzBhKW29/view?usp=sharing](https://drive.google.com/file/d/1lPzG-XooVw5cA4QOp6GXJzChzzBhKW29/view?usp=sharing) and place it in the same directory as [StoreSalesMain.py](storesalesmain.py/)
+
+```bash
+python3 StoreSalesMain.py --predict
+```
+
+If you **don't want** to obtain the Data analysis graphs
 
 ```bash
 python3 StoreSalesMain.py --noPlot
