@@ -1,4 +1,4 @@
-# **Rossmann-Store-Sales (Score: 0.10362)**
+# **Rossmann-Store-Sales**
 
 # Introduction
 
